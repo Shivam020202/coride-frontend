@@ -31,6 +31,7 @@ import DriverHome from "./pages/DriverHome";
 import DriverHistory from "./pages/DriverHistory";
 import DriverProfile from "./pages/DriverProfile";
 import DriverActiveRide from "./pages/DriverActiveRide";
+import TrackRide from "./pages/TrackRide";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -116,6 +117,7 @@ const App: React.FC = () => (
         <Route exact path="/active-ride" component={ActiveRide} />
         <Route exact path="/driver/active-ride" component={DriverActiveRide} />
         <Route exact path="/settings" component={Settings} />
+        <Route exact path="/track" component={TrackRide} />
         <Route path="/tabs" component={MainTabs} />
         <Route path="/driver" component={DriverTabs} />
         <Route exact path="/">

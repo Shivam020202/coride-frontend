@@ -18,6 +18,36 @@
   margin: 0;
 }
 
+/* ── LIVE badge ─────────────────────────────────────────────────────────────── */
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(22, 163, 74, 0.92);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.4);
+  margin-right: 4px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
 .ride-content-bg {
   --background: #f1f5f9;
 }
@@ -80,21 +110,13 @@
   color: #ffffff;
 }
 
-.ride-progress-bar {
-  height: 6px;
-  border-radius: 4px;
-  --background: #f1f5f9;
-  --progress-background: var(--ion-color-primary);
-  margin-bottom: 32px;
-}
-
 .driver-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 32px 0;
+  padding: 0 0 24px 0;
   border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .driver-hero {
@@ -166,7 +188,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 4px;
 }
 
 .action-circle {
@@ -188,24 +210,245 @@
   font-size: 1.6rem;
 }
 
-.bg-soft {
-  --background: #f1f5f9;
-}
-.bg-brand {
-  --background: var(--ion-color-primary);
-}
-.bg-danger-soft {
-  --background: #fef2f2;
-}
-.text-brand {
-  color: var(--ion-color-primary) !important;
-}
-.text-red {
-  color: #ef4444 !important;
-}
+.bg-soft { --background: #f1f5f9; }
+.bg-brand { --background: var(--ion-color-primary); }
+.bg-sharing { --background: #16a34a; }
+.bg-danger-soft { --background: #fef2f2; }
+.text-brand { color: var(--ion-color-primary) !important; }
+.text-sharing { color: #16a34a !important; }
+.text-red { color: #ef4444 !important; }
 
 .action-circle span {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #0f172a;
 }
+
+/* ── Sharing active banner ──────────────────────────────────────────────────── */
+.sharing-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+  border: 1.5px solid #86efac;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 20px;
+}
+
+.sharing-banner-icon {
+  font-size: 1.4rem;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.sharing-banner-text {
+  flex: 1;
+}
+
+.sharing-banner-text strong {
+  font-size: 0.9rem;
+  color: #14532d;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.sharing-banner-text p {
+  font-size: 0.78rem;
+  color: #166534;
+  margin: 0;
+}
+
+.sharing-resend-btn {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Emergency overlay ──────────────────────────────────────────────────────── */
+.emergency-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  padding: env(safe-area-inset-top, 0px) 0 0 0;
+  animation: overlay-in 0.25s ease;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.emergency-panel {
+  background: #ffffff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  width: 100%;
+  padding: 28px 24px calc(32px + env(safe-area-inset-bottom, 0px)) 24px;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25);
+  animation: panel-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes panel-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.emergency-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.emergency-icon-large {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.emergency-panel-header h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  flex: 1;
+}
+
+.emergency-close-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.emergency-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.emergency-ride-info {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eri-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.eri-row span {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.eri-row strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* SOS call button */
+.sos-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.sos-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3);
+}
+
+.sos-icon {
+  font-size: 1.3rem;
+  animation: ring 1.5s ease-in-out infinite;
+}
+
+@keyframes ring {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-12deg); }
+  20% { transform: rotate(12deg); }
+  30% { transform: rotate(-8deg); }
+  40% { transform: rotate(8deg); }
+  50% { transform: rotate(0deg); }
+}
+
+/* Share live location button */
+.emergency-share-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background 0.15s ease;
+}
+
+.emergency-share-btn:active {
+  background: #1e293b;
+}
+
+.emergency-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Responsive tweaks ──────────────────────────────────────────────────────── */
+@media (max-width: 360px) {
+  .ride-status-text { font-size: 1.35rem; }
+  .circle-btn { width: 52px; height: 52px; }
+  .action-circle span { font-size: 0.75rem; }
+  .ride-bottom-sheet { padding: 20px 18px 36px 18px; }
+}
+

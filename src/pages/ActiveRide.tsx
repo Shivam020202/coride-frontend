@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import {
   IonPage,
@@ -19,6 +19,8 @@ import {
   callOutline,
   chatbubbleOutline,
   warningOutline,
+  stopCircle,
+  locationOutline,
 } from "ionicons/icons";
 import {
   GoogleMap,
@@ -30,6 +32,11 @@ import socket from "../socket";
 import "./ActiveRide.css";
 
 const libraries: "places"[] = ["places"];
+
+/** Generate a short random token for the share session */
+const genToken = () =>
+  Math.random().toString(36).substring(2, 10) +
+  Math.random().toString(36).substring(2, 10);
 
 const ActiveRide: React.FC = () => {
   const history = useHistory();
@@ -64,6 +71,12 @@ const ActiveRide: React.FC = () => {
     lng: number;
   } | null>(null);
 
+  // ── Share state ─────────────────────────────────────────────────────────────
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [showEmergencyPanel, setShowEmergencyPanel] = useState(false);
+  const locationWatchRef = useRef<number | null>(null);
+
   const [present] = useIonToast();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -91,15 +104,10 @@ const ActiveRide: React.FC = () => {
       if (!state.origin || !state.destination) return;
       const directionsService = new window.google.maps.DirectionsService();
 
-      // Fallback handlers if exact coords aren't known or mapping is bad
       let reqOrigin = state.origin;
-      if (reqOrigin === "Current Location") {
-        reqOrigin = "New York, NY"; // Mock fallback
-      }
+      if (reqOrigin === "Current Location") reqOrigin = "New York, NY";
       let reqDest = state.destination;
-      if (reqDest === "Unknown Destination") {
-        reqDest = "Central Park, NY"; // Mock fallback
-      }
+      if (reqDest === "Unknown Destination") reqDest = "Central Park, NY";
 
       try {
         const results = await directionsService.route({
@@ -115,22 +123,15 @@ const ActiveRide: React.FC = () => {
             lat: start.lat() - 0.005,
             lng: start.lng() - 0.005,
           });
-
-          // Force the map to strictly bind to the calculated route
-          if (map) {
-            map.fitBounds(results.routes[0].bounds);
-          }
+          if (map) map.fitBounds(results.routes[0].bounds);
         }
       } catch (err) {
         console.error("Error calculating directions in ActiveRide", err);
-        // Set an arbitrary map center fallback if routing completely fails
-        map?.setCenter({ lat: 40.7128, lng: -74.0060 });
+        map?.setCenter({ lat: 40.7128, lng: -74.006 });
         map?.setZoom(12);
       }
     };
-    if (isLoaded && map) {
-      fetchDirections();
-    }
+    if (isLoaded && map) fetchDirections();
   }, [isLoaded, map, state.origin, state.destination]);
 
   useEffect(() => {
@@ -142,23 +143,12 @@ const ActiveRide: React.FC = () => {
     socket.on("rideStatusUpdate", (status: string) => {
       setRideStatus(status);
       if (status === "arrived") {
-        present({
-          message: "Driver has arrived!",
-          duration: 3000,
-          color: "success",
-        });
+        present({ message: "Driver has arrived!", duration: 3000, color: "success" });
       } else if (status === "in_transit") {
-        present({
-          message: "Heading to destination!",
-          duration: 3000,
-          color: "primary",
-        });
+        present({ message: "Heading to destination!", duration: 3000, color: "primary" });
       } else if (status === "completed") {
-        present({
-          message: "Ride completed. Thanks for riding!",
-          duration: 4000,
-          color: "success",
-        });
+        present({ message: "Ride completed. Thanks for riding!", duration: 4000, color: "success" });
+        stopSharing();
         history.replace("/tabs/home");
       }
     });
@@ -169,24 +159,93 @@ const ActiveRide: React.FC = () => {
     };
   }, [rideStatus, present, history]);
 
-  const shareLocation = () => {
-    present({
-      message: "Location shared safely with trusted contacts.",
-      duration: 2000,
-      position: "bottom",
-      icon: shareSocial,
-      color: "primary",
-    });
+  // Cleanup watcher on unmount
+  useEffect(() => {
+    return () => {
+      if (locationWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(locationWatchRef.current);
+      }
+    };
+  }, []);
+
+  // ── Share Ride (live location) ───────────────────────────────────────────────
+  const startSharing = async () => {
+    const token = genToken();
+    setShareToken(token);
+    setIsSharing(true);
+
+    // Tell backend we're starting a share session
+    socket.emit("startSharing", { token });
+
+    // Start watching GPS and broadcasting every position update
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          socket.emit("broadcastLocation", {
+            token,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        (err) => console.warn("Location watch error:", err),
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
+      locationWatchRef.current = watchId;
+    }
+
+    // Build the shareable tracking URL
+    const trackUrl = `${window.location.origin}/track?token=${token}`;
+    const shareText =
+      `🚗 I'm in a CoRide — track me live!\n\n` +
+      `Driver: ${state.driverName} · ${state.driverCar} (${state.driverLicense})\n` +
+      `From: ${state.origin}\n` +
+      `To: ${state.destination}\n\n` +
+      `Live tracking link:\n${trackUrl}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Track my CoRide", text: shareText, url: trackUrl });
+      } else {
+        // Fallback — copy to clipboard
+        await navigator.clipboard.writeText(shareText);
+        present({ message: "Tracking link copied to clipboard!", duration: 3000, color: "success" });
+      }
+    } catch (err) {
+      // User cancelled share — still streaming
+    }
   };
 
-  const emergencyCall = () => {
-    present({
-      message: "Connecting to emergency services...",
-      duration: 3000,
-      position: "bottom",
-      icon: warningOutline,
-      color: "danger",
-    });
+  const stopSharing = () => {
+    if (locationWatchRef.current !== null) {
+      navigator.geolocation.clearWatch(locationWatchRef.current);
+      locationWatchRef.current = null;
+    }
+    setIsSharing(false);
+    setShareToken(null);
+  };
+
+  // ── Emergency SOS ────────────────────────────────────────────────────────────
+  const triggerSOS = () => {
+    setShowEmergencyPanel(false);
+    window.location.href = "tel:112";
+  };
+
+  const shareEmergency = async () => {
+    if (!isSharing) await startSharing();
+    else {
+      const trackUrl = `${window.location.origin}/track?token=${shareToken}`;
+      const msg =
+        `🚨 EMERGENCY — I need help!\n` +
+        `I'm in a CoRide with ${state.driverName} (${state.driverCar} · ${state.driverLicense})\n` +
+        `Live location: ${trackUrl}`;
+      if (navigator.share) {
+        await navigator.share({ title: "EMERGENCY — track me", text: msg, url: trackUrl });
+      } else {
+        await navigator.clipboard.writeText(msg);
+        present({ message: "Emergency message copied!", duration: 3000, color: "danger" });
+      }
+    }
+    setShowEmergencyPanel(false);
   };
 
   const customCarIcon = {
@@ -211,61 +270,52 @@ const ActiveRide: React.FC = () => {
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
+          {/* Live sharing badge in toolbar */}
+          {isSharing && (
+            <IonButtons slot="end">
+              <div className="live-badge">
+                <span className="live-dot" />
+                LIVE
+              </div>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen className="ride-content-bg">
+        {/* Full-screen map */}
         <div
           className="ride-map-fullscreen"
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "55vh",
-            top: 0,
-            left: 0,
-          }}
+          style={{ position: "absolute", width: "100%", height: "55vh", top: 0, left: 0 }}
         >
           {isLoaded && (
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "100%" }}
               center={{ lat: 40.7128, lng: -74.006 }}
               zoom={14}
-              options={{
-                zoomControl: false,
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: false,
-              }}
+              options={{ zoomControl: false, streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
               onLoad={onLoad}
               onUnmount={onUnmount}
             >
               {directionsResponse && (
                 <DirectionsRenderer
                   directions={directionsResponse}
-                  options={{
-                    suppressMarkers: false,
-                    polylineOptions: {
-                      strokeColor: "#1e3a8a",
-                      strokeWeight: 5,
-                    },
-                  }}
+                  options={{ suppressMarkers: false, polylineOptions: { strokeColor: "#1e3a8a", strokeWeight: 5 } }}
                 />
               )}
-
               {carLoc && customCarIcon.scaledSize && (
-                <Marker
-                  position={carLoc}
-                  icon={customCarIcon as google.maps.Icon}
-                />
+                <Marker position={carLoc} icon={customCarIcon as google.maps.Icon} />
               )}
             </GoogleMap>
           )}
         </div>
 
+        {/* Bottom sheet */}
         <div className="ride-bottom-sheet">
-          <div className="sheet-pill"></div>
+          <div className="sheet-pill" />
 
           <div className="ride-sheet-content">
+            {/* Header: status + ETA */}
             <div className="ride-header">
               <div>
                 <h2 className="ride-status-text">
@@ -275,18 +325,8 @@ const ActiveRide: React.FC = () => {
                       ? "Heading to destination"
                       : "Driver is heading to you"}
                 </h2>
-                <p
-                  style={{
-                    margin: "4px 0 0 0",
-                    color: "#64748b",
-                    fontWeight: 500,
-                    fontSize: "0.95rem",
-                  }}
-                >
-                  {rideStatus === "in_transit"
-                    ? ""
-                    : state.distance || "1.2 mi"}{" "}
-                  away
+                <p style={{ margin: "4px 0 0 0", color: "#64748b", fontWeight: 500, fontSize: "0.95rem" }}>
+                  {rideStatus === "in_transit" ? "" : state.distance || "1.2 mi"} away
                 </p>
               </div>
               <div className="ride-eta-box">
@@ -294,6 +334,7 @@ const ActiveRide: React.FC = () => {
               </div>
             </div>
 
+            {/* Driver card */}
             <div className="driver-card">
               <div className="driver-hero">
                 <div className="avatar-wrapper">
@@ -302,14 +343,12 @@ const ActiveRide: React.FC = () => {
                   </IonAvatar>
                   <div className="rating-pill">{state.driverRating}</div>
                 </div>
-
                 <div className="driver-meta">
                   <h3>{state.driverName}</h3>
                   <p>{state.driverCar}</p>
                   <div className="license-badge">{state.driverLicense}</div>
                 </div>
               </div>
-
               <div className="car-image-mock">
                 <img
                   src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=400&q=80"
@@ -319,6 +358,7 @@ const ActiveRide: React.FC = () => {
               </div>
             </div>
 
+            {/* Actions row */}
             <div className="ride-actions">
               <div className="action-circle">
                 <IonButton fill="clear" className="circle-btn bg-soft">
@@ -326,38 +366,108 @@ const ActiveRide: React.FC = () => {
                 </IonButton>
                 <span>Call</span>
               </div>
+
               <div className="action-circle">
                 <IonButton fill="clear" className="circle-btn bg-soft">
                   <IonIcon icon={chatbubbleOutline} color="dark" />
                 </IonButton>
                 <span>Message</span>
               </div>
+
+              {/* Share / Stop sharing */}
               <div className="action-circle">
-                <IonButton
-                  fill="clear"
-                  className="circle-btn bg-brand"
-                  onClick={shareLocation}
-                >
-                  <IonIcon icon={shareSocial} color="light" />
-                </IonButton>
-                <span className="text-brand">Share</span>
+                {isSharing ? (
+                  <IonButton
+                    fill="clear"
+                    className="circle-btn bg-sharing"
+                    onClick={stopSharing}
+                  >
+                    <IonIcon icon={stopCircle} color="light" />
+                  </IonButton>
+                ) : (
+                  <IonButton
+                    fill="clear"
+                    className="circle-btn bg-brand"
+                    onClick={startSharing}
+                  >
+                    <IonIcon icon={shareSocial} color="light" />
+                  </IonButton>
+                )}
+                <span className={isSharing ? "text-sharing" : "text-brand"}>
+                  {isSharing ? "Stop" : "Share"}
+                </span>
               </div>
+
+              {/* Safety / SOS */}
               <div className="action-circle">
                 <IonButton
                   fill="clear"
                   className="circle-btn bg-danger-soft"
-                  onClick={emergencyCall}
+                  onClick={() => setShowEmergencyPanel(true)}
                 >
                   <IonIcon icon={shieldCheckmark} color="danger" />
                 </IonButton>
                 <span className="text-red">Safety</span>
               </div>
             </div>
+
+            {/* Active sharing banner */}
+            {isSharing && (
+              <div className="sharing-banner">
+                <IonIcon icon={locationOutline} className="sharing-banner-icon" />
+                <div className="sharing-banner-text">
+                  <strong>Sharing live location</strong>
+                  <p>Your contacts can track you in real-time</p>
+                </div>
+                <button className="sharing-resend-btn" onClick={startSharing}>
+                  Reshare
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Emergency modal overlay */}
+        {showEmergencyPanel && (
+          <div className="emergency-overlay" onClick={() => setShowEmergencyPanel(false)}>
+            <div className="emergency-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="emergency-panel-header">
+                <span className="emergency-icon-large">🚨</span>
+                <h2>Emergency Safety</h2>
+                <button className="emergency-close-btn" onClick={() => setShowEmergencyPanel(false)}>✕</button>
+              </div>
+
+              <p className="emergency-subtitle">
+                Choose an action. Your ride details will be shared automatically.
+              </p>
+
+              {/* Ride info summary */}
+              <div className="emergency-ride-info">
+                <div className="eri-row"><span>Driver</span><strong>{state.driverName}</strong></div>
+                <div className="eri-row"><span>Vehicle</span><strong>{state.driverCar}</strong></div>
+                <div className="eri-row"><span>Plate</span><strong>{state.driverLicense}</strong></div>
+              </div>
+
+              <button className="sos-btn" onClick={triggerSOS}>
+                <span className="sos-icon">📞</span>
+                Call Emergency (112)
+              </button>
+
+              <button className="emergency-share-btn" onClick={shareEmergency}>
+                <span>📍</span>
+                Share Live Location + Ride Details
+              </button>
+
+              <p className="emergency-note">
+                Tapping "Share" opens your phone's share sheet (WhatsApp, SMS, etc.) with your live tracking link and full ride info.
+              </p>
+            </div>
+          </div>
+        )}
       </IonContent>
     </IonPage>
   );
 };
 
 export default ActiveRide;
+

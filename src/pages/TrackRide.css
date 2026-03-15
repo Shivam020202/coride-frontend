@@ -1,0 +1,228 @@
+/* TrackRide page — live location viewer */
+
+.track-content {
+  --background: #f8fafc;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.track-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 12px) + 12px) 20px 12px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.track-header-brand {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.track-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.track-status-pill.connected {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.track-status-pill.disconnected {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.track-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.track-status-pill.connected .track-dot { background: #16a34a; }
+.track-status-pill.disconnected .track-dot { background: #b45309; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ── Map ─────────────────────────────────────────────────────────────────────── */
+.track-map-wrapper {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 60px);
+  left: 0;
+  right: 0;
+  height: 55vh;
+  z-index: 1;
+}
+
+.track-map-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+}
+
+/* ── Info panel ─────────────────────────────────────────────────────────────── */
+.track-info-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px)) 24px;
+  box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-height: calc(45vh - 60px);
+}
+
+.track-waiting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.track-waiting div strong {
+  display: block;
+  font-size: 1rem;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.track-waiting div p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.track-coords-row {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  gap: 0;
+}
+
+.track-coords-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.track-coords-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.track-coords-item strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-divider {
+  width: 1px;
+  height: 36px;
+  background: #e2e8f0;
+}
+
+.track-updated {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0 0 16px 0;
+}
+
+.track-maps-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #dc2626;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+  transition: background 0.15s ease;
+}
+
+.track-maps-btn:active {
+  background: #b91c1c;
+}
+
+.track-footer-note {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────────── */
+.track-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 32px;
+  text-align: center;
+  gap: 12px;
+}
+
+.track-error span {
+  font-size: 3rem;
+}
+
+.track-error h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.track-error p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 360px) {
+  .track-coords-item strong { font-size: 0.82rem; }
+  .track-maps-btn { font-size: 0.9rem; padding: 14px; }
+}
