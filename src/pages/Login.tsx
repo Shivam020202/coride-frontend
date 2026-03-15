@@ -14,7 +14,25 @@ import {
   useIonToast,
 } from "@ionic/react";
 import axios from "axios";
+import { Geolocation } from "@capacitor/geolocation";
 import "./Auth.css";
+
+/** Silently request geolocation permission — must be called within a user gesture */
+const requestLocationPermission = async () => {
+  try {
+    // Try Capacitor first (works on native + PWA)
+    await Geolocation.requestPermissions();
+  } catch {
+    // Fallback: trigger the browser's native permission dialog
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {}, // success — permission granted
+        () => {}, // deny — user said no, we'll handle later
+        { timeout: 5000 }
+      );
+    }
+  }
+};
 
 const Login: React.FC = () => {
   const [role, setRole] = useState<"consumer" | "driver">("consumer");
@@ -40,6 +58,10 @@ const Login: React.FC = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", response.data.role);
 
+      // Request location permission right after login (user gesture context active)
+      // Do not await — runs in background so navigation isn't blocked
+      requestLocationPermission();
+
       setLoading(false);
       present({
         message: "Logged in successfully!",
@@ -56,6 +78,7 @@ const Login: React.FC = () => {
       });
     }
   };
+
 
   return (
     <IonPage>

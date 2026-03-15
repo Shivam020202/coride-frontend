@@ -45,6 +45,24 @@ const Home: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [presentToast] = useIonToast();
 
+  // Check & silently re-request location permission when Home mounts
+  useEffect(() => {
+    const checkLocationPermission = async () => {
+      try {
+        if (navigator.permissions) {
+          const result = await navigator.permissions.query({ name: "geolocation" });
+          if (result.state === "prompt") {
+            // Silently trigger permission dialog via a quick getCurrentPosition
+            navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 3000 });
+          }
+        }
+      } catch {
+        // Permissions API not available on this browser — no-op
+      }
+    };
+    checkLocationPermission();
+  }, []);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -110,57 +128,80 @@ const Home: React.FC = () => {
   }, []);
 
   const getCurrentLocation = async () => {
+    setIsGettingLoc(true);
     try {
-      setIsGettingLoc(true);
-      let loc;
-      try {
-        const permission = await Geolocation.checkPermissions();
-        if (permission.location !== "granted") {
-          const req = await Geolocation.requestPermissions();
-          if (req.location !== "granted") throw new Error("Permission denied");
+      // Step 1 — Check current permission state via browser Permissions API
+      if (navigator.permissions) {
+        try {
+          const result = await navigator.permissions.query({ name: "geolocation" });
+          if (result.state === "denied") {
+            presentToast({
+              message:
+                "Location access is blocked. Please enable it in your browser/phone Settings and try again.",
+              duration: 4000,
+              color: "danger",
+            });
+            setIsGettingLoc(false);
+            return;
+          }
+        } catch {
+          // Permissions API unavailable — continue and let geolocation itself handle it
         }
-        const position = await Geolocation.getCurrentPosition();
-        loc = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-      } catch (geoError: any) {
-        console.warn("Real geolocation failed.", geoError);
-        presentToast({
-          message:
-            "Please allow Location Permissions via your phone or browser settings.",
-          duration: 3000,
-          color: "danger",
-        });
-        setIsGettingLoc(false);
-        return;
       }
+
+      // Step 2 — Also try Capacitor (re-requests permission if needed on native)
+      try {
+        const cap = await Geolocation.checkPermissions();
+        if (cap.location !== "granted") {
+          await Geolocation.requestPermissions();
+        }
+      } catch {
+        // Capacitor not available in browser context — fall through to native API
+      }
+
+      // Step 3 — Get position via browser-native geolocation (most reliable on mobile PWA)
+      const loc = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      });
 
       setUserLoc(loc);
       setMapCenter(loc);
       map?.panTo(loc);
       map?.setZoom(16);
 
-      // Reverse Geocoding
+      // Step 4 — Reverse geocode to fill the pickup input
       try {
         const geocoder = new window.google.maps.Geocoder();
         const response = await geocoder.geocode({ location: loc });
-        if (response.results[0]) {
-          if (originRef.current) {
-            originRef.current.value = response.results[0].formatted_address;
-          }
+        if (response.results[0] && originRef.current) {
+          originRef.current.value = response.results[0].formatted_address;
         }
-      } catch (geocodeErr) {
-        console.warn(
-          "Geocoder failed (Billing might be disabled), placing fallback text.",
-          geocodeErr,
-        );
+      } catch {
         if (originRef.current) {
-          originRef.current.value = `${loc.lat}, ${loc.lng}`;
+          originRef.current.value = `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error getting location", err);
+      // GeolocationPositionError codes: 1=PERMISSION_DENIED, 2=UNAVAILABLE, 3=TIMEOUT
+      if (err?.code === 1) {
+        presentToast({
+          message:
+            "Location denied. Please allow location access in your browser or phone Settings.",
+          duration: 4000,
+          color: "danger",
+        });
+      } else {
+        presentToast({
+          message: "Could not get your location. Please try again.",
+          duration: 3000,
+          color: "warning",
+        });
+      }
     } finally {
       setIsGettingLoc(false);
     }
