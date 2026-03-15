@@ -70,17 +70,34 @@
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
   padding: 24px 20px;
+  /* Add bottom padding to clear the tab bar (56px) + safe area */
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.08);
   z-index: 1000;
-  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: height 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
   height: auto;
   min-height: 42vh;
+  /* Safety: don't let collapsed sheet outgrow the screen */
+  max-height: 55vh;
+  overflow-y: hidden;
 }
 
 .bottom-sheet.expanded {
-  min-height: 62vh;
-  max-height: 62vh;
+  /*
+   * Tab bar = 56px + env(safe-area-inset-bottom)
+   * Toolbar at top ≈ 56px
+   * This fills exactly the space between the toolbar and tab bar.
+   */
+  height: calc(100vh - 56px - env(safe-area-inset-top, 44px) - 56px - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100vh - 56px - env(safe-area-inset-top, 44px) - 56px - env(safe-area-inset-bottom, 0px));
+  min-height: unset;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /*
+   * Bottom padding = confirm button height (56px) + gap (16px) + tab bar (56px)
+   * ensures the button is NEVER hidden behind the tab bar
+   */
+  padding-bottom: calc(128px + env(safe-area-inset-bottom, 0px));
 }
 
 .greeting {
