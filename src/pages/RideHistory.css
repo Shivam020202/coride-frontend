@@ -1,0 +1,93 @@
+.history-bg {
+  --background: #f8fafc;
+}
+
+.section-title {
+  padding: 16px 24px 8px 24px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.history-list {
+  background: transparent;
+  padding: 0 16px;
+}
+
+.history-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  margin-bottom: 12px;
+  --background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  padding: 8px 0;
+}
+
+.history-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-right: 18px;
+}
+
+.history-item h2 {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.history-item p {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.car-type {
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  font-size: 0.85rem;
+  margin: 0;
+  background: #eff6ff;
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.price-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+
+.price-details h2 {
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin: 0 0 8px 0;
+  color: #0f172a;
+}
+
+.rating {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #0f172a;
+}
+
+.rating ion-icon {
+  font-size: 0.95rem;
+  color: #eab308;
+}

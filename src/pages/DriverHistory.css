@@ -1,0 +1,86 @@
+.driver-history-content {
+  --background: #f4f5f9;
+}
+
+.earnings-summary {
+  background: white;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.earnings-summary h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.earnings-amount {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #000;
+  margin: 0.5rem 0 0;
+}
+
+.history-list {
+  padding: 1rem;
+}
+
+.history-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-date {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.history-earnings {
+  font-weight: 700;
+  color: #000;
+  font-size: 1.1rem;
+}
+
+.history-route {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.history-route ion-icon {
+  font-size: 1.5rem;
+  color: #000;
+}
+
+.history-details {
+  flex: 1;
+}
+
+.history-user {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.history-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}

@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --ion-font-family:
+    "Outfit", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Roboto",
+    sans-serif;
+  --ion-color-primary: #000000; /* Sleek Pitch Black */
+  --ion-color-primary-rgb: 0, 0, 0;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #000000;
+  --ion-color-primary-tint: #333333;
+
+  --ion-color-danger: #ea4335;
+  --ion-color-danger-rgb: 234, 67, 53;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #ce3a2e;
+  --ion-color-danger-tint: #ec5648;
+
+  --ion-color-success: #05a357;
+  --ion-color-success-rgb: 5, 163, 87;
+
+  --brand-gradient: linear-gradient(135deg, #000000 0%, #333333 100%);
+}
+
+body {
+  font-family: "Outfit", sans-serif;
+  --ion-font-family: "Outfit", sans-serif;
+  background-color: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+p {
+  color: #64748b;
+}
+
+/* Utilities */
+.text-red {
+  color: #ef4444 !important;
+}
+.text-green {
+  color: #10b981 !important;
+}
+.bg-dark {
+  background-color: #0f172a !important;
+}
+.text-brand {
+  color: #000000 !important;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+ion-content {
+  --background: #f8fafc;
+}
+
+.premium-tab-bar {
+  --background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(56px + env(safe-area-inset-bottom));
+}
+
+.premium-tab-bar ion-tab-button {
+  --color: #94a3b8;
+  --color-selected: #000000;
+}
+
+.premium-tab-bar ion-icon {
+  font-size: 1.4rem;
+  margin-bottom: 2px;
+}
+
+.premium-tab-bar ion-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Leaflet Overrides */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Remove Ionic desktop viewport frame/glow */
+ion-app,
+ion-app.ion-page,
+.ion-page {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+html,
+body,
+html.plt-desktop,
+html.plt-desktop body,
+html.plt-desktop ion-app {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  outline: none !important;
+  background: #ffffff !important;
+}
+
+/* Override Ionic's default label color for inputs */
+ion-input {
+  --highlight-color-focused: #18181b !important;
+  --highlight-color: #18181b !important;
+}

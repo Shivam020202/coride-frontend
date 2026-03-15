@@ -1,0 +1,232 @@
+/* ── Auth Pages — Premium Minimal (iOS mode) ── */
+
+.auth-content {
+  --background: #ffffff;
+}
+
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 0 28px;
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* ── Brand Header ── */
+.auth-header {
+  margin-bottom: 36px;
+}
+
+.brand-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+  letter-spacing: -1px;
+  color: #18181b;
+  line-height: 1.1;
+}
+
+.auth-header p {
+  color: #a3a3a3;
+  font-size: 0.875rem;
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+/* ── Role Segment (iOS mode renders filled pills) ── */
+.role-segment {
+  margin-bottom: 28px;
+  --background: #f4f4f5;
+  border-radius: 10px;
+  padding: 3px;
+  height: 42px;
+}
+
+.role-segment ion-segment-button {
+  --indicator-color: #18181b;
+  --indicator-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --color: #71717a;
+  --color-checked: #fafafa;
+  --border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  min-height: 36px;
+}
+
+/* ── Form ── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.auth-input-item {
+  --background: transparent;
+  --border-radius: 0;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --highlight-color-focused: #18181b;
+  --highlight-color-valid: #d4d4d8;
+  --highlight-height: 1.5px;
+  --border-color: transparent;
+  --border-width: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e4e4e7;
+  box-shadow: none !important;
+  --min-height: 56px;
+}
+
+/* Force Ionic input label to be neutral gray, override primary */
+.auth-input-item ion-input {
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  --color: #18181b;
+  --placeholder-color: #a1a1aa;
+  --highlight-color-focused: #18181b;
+  --highlight-color: #18181b;
+  letter-spacing: 0;
+  caret-color: #18181b;
+}
+
+/* Override Ionic's primary-based label color on ion-input floating label */
+.auth-input-item ion-input::part(label) {
+  color: #a1a1aa !important;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.auth-input-item.item-has-focus ion-input::part(label) {
+  color: #71717a !important;
+}
+
+/* ── Submit Button ── */
+.auth-button {
+  --background: #18181b;
+  --background-hover: #27272a;
+  --background-activated: #3f3f46;
+  --color: #fafafa;
+  --border-radius: 12px;
+  margin-top: 24px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  height: 50px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  --box-shadow: none;
+  transition: transform 0.12s ease;
+}
+
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+/* ── Footer ── */
+.auth-footer {
+  margin-top: 32px;
+  text-align: center;
+  color: #a1a1aa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.auth-footer ion-text {
+  font-weight: 400;
+  font-size: 0.825rem;
+  color: #a1a1aa;
+}
+
+.link-button {
+  --color: #18181b;
+  font-weight: 600;
+  font-size: 0.825rem;
+  text-transform: none;
+  --padding-start: 4px;
+  --padding-end: 0;
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Forgot Password ── */
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+.forgot-btn {
+  --color: #a1a1aa;
+  font-weight: 400;
+  font-size: 0.775rem;
+  text-transform: none;
+  --padding-start: 0;
+  --padding-end: 0;
+  letter-spacing: 0;
+  height: auto;
+  min-height: 0;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+  .auth-container {
+    padding: 0 48px;
+  }
+
+  .brand-logo {
+    font-size: 2.25rem;
+  }
+}
+
+/* ── Gender Select ── */
+.gender-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 0 12px 0;
+  border-bottom: 1px solid #e4e4e7;
+  margin-bottom: 0;
+}
+
+.gender-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #a1a1aa;
+  letter-spacing: 0;
+  padding-left: 0;
+}
+
+.gender-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #18181b;
+  padding: 0;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2371717a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  padding-right: 20px;
+}
+
+.gender-select option {
+  font-size: 0.95rem;
+  color: #18181b;
+}
