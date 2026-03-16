@@ -48,7 +48,7 @@ const Login: React.FC = () => {
 
     try {
       const apiUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        import.meta.env.VITE_API_URL || "https://localhost:5000/api";
       const response = await axios.post(`${apiUrl}/auth/login`, {
         email,
         password,

@@ -37,7 +37,7 @@ const Profile: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         const apiUrl =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+          import.meta.env.VITE_API_URL || "https://localhost:5000/api";
         const res = await axios.get(`${apiUrl}/auth/me`, {
           headers: { "x-auth-token": token },
         });

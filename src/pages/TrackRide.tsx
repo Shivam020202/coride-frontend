@@ -22,7 +22,7 @@ const TrackRide: React.FC = () => {
   useEffect(() => {
     if (!token) return;
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const apiUrl = import.meta.env.VITE_API_URL || "https://localhost:5000/api";
     // Socket URL = base without /api
     const socketUrl = apiUrl.replace("/api", "");
 
