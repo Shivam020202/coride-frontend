@@ -55,7 +55,7 @@ const DriverActiveRide: React.FC = () => {
 
   const customCarIcon = {
     url: "https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,w_956,h_637/v1555367310/assets/30/51e602-10bb-4e65-b122-e394d80a1c97/original/UberX_Transparent.png",
-    scaledSize: window.google?.maps
+    scaledSize: window.google?.maps?.Size
       ? new window.google.maps.Size(70, 45)
       : null,
   };
@@ -73,21 +73,31 @@ const DriverActiveRide: React.FC = () => {
         pickup: "Times Square, New York, NY",
       });
     }
-    // Don't redirect away — the state might not be loaded yet on first render
   }, [location.state]);
 
   useEffect(() => {
+    if (!isLoaded || !map || !rideDetails) return;
+
     const fetchDirections = async () => {
-      if (!rideDetails?.pickup || !rideDetails?.destination) return;
       const directionsService = new window.google.maps.DirectionsService();
-      let reqOrigin = rideDetails.pickup;
-      if (reqOrigin === "Current Location") {
-        reqOrigin = "New York, NY"; // Mock fallback
+      
+      let reqOrigin: any = rideDetails.pickup;
+      let reqDest: any = rideDetails.destination;
+
+      // If heading to pickup, navigate from Driver GPS to User Pickup
+      if (status === "picking_up") {
+        if (!driverLoc) return; // Wait until GPS acquires to render the navigation line!
+        reqOrigin = driverLoc;
+        reqDest = rideDetails.pickup;
+      } 
+      // If heading to dropoff, navigate from User Pickup to User Dropoff
+      else if (status === "in_transit") {
+        reqOrigin = rideDetails.pickup;
+        reqDest = rideDetails.destination;
       }
-      let reqDest = rideDetails.destination;
-      if (reqDest === "Unknown Destination") {
-        reqDest = "Central Park, NY"; // Mock fallback
-      }
+
+      if (reqOrigin === "Current Location") reqOrigin = "New York, NY";
+      if (reqDest === "Unknown Destination") reqDest = "Central Park, NY";
 
       try {
         const results = await directionsService.route({
@@ -96,18 +106,18 @@ const DriverActiveRide: React.FC = () => {
           travelMode: window.google.maps.TravelMode.DRIVING,
         });
         setDirectionsResponse(results);
-        if (map && results.routes[0].bounds) {
+        if (map && results.routes[0]?.bounds) {
           map.fitBounds(results.routes[0].bounds);
         }
       } catch (err) {
+        console.warn("Directions failed", err);
         map?.setCenter({ lat: 40.7128, lng: -74.0060 });
         map?.setZoom(12);
       }
     };
-    if (isLoaded && map && rideDetails) {
-      fetchDirections();
-    }
-  }, [isLoaded, map, rideDetails]);
+
+    fetchDirections();
+  }, [isLoaded, map, rideDetails, status, driverLoc !== null]);
 
   // Request live driver location
   useEffect(() => {
