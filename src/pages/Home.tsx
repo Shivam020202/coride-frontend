@@ -114,6 +114,9 @@ const Home: React.FC = () => {
   );
   const [isGettingLoc, setIsGettingLoc] = useState(false);
 
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [dropoffLocation, setDropoffLocation] = useState("");
+
   /** @type React.MutableRefObject<HTMLInputElement> */
   const originRef = useRef<HTMLInputElement>(null);
   /** @type React.MutableRefObject<HTMLInputElement> */
@@ -212,6 +215,10 @@ const Home: React.FC = () => {
       return;
     }
     const directionsService = new window.google.maps.DirectionsService();
+    
+    setPickupLocation(originRef.current!.value);
+    setDropoffLocation(destRef.current!.value);
+
     try {
       const results = await directionsService.route({
         origin: originRef.current!.value,
@@ -247,15 +254,14 @@ const Home: React.FC = () => {
 
     const riderId = user._id || user.id;
 
-    // Read input values - these are plain <input> refs inside <Autocomplete>
-    const pickupText = originRef.current?.value?.trim();
-    const destText = destRef.current?.value?.trim();
+    const pickupText = pickupLocation || "Times Square, New York, NY";
+    const destText = dropoffLocation || "Central Park, New York, NY";
 
     const rideData = {
       userId: riderId,
       user: user.name,
-      pickup: pickupText || "Times Square, New York, NY",
-      destination: destText || "Central Park, New York, NY",
+      pickup: pickupText,
+      destination: destText,
       distance,
       duration,
       price: fare,

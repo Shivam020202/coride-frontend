@@ -51,6 +51,15 @@ const DriverActiveRide: React.FC = () => {
   const [directionsResponse, setDirectionsResponse] =
     useState<google.maps.DirectionsResult | null>(null);
 
+  const [driverLoc, setDriverLoc] = useState<{ lat: number; lng: number } | null>(null);
+
+  const customCarIcon = {
+    url: "https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,w_956,h_637/v1555367310/assets/30/51e602-10bb-4e65-b122-e394d80a1c97/original/UberX_Transparent.png",
+    scaledSize: window.google?.maps
+      ? new window.google.maps.Size(70, 45)
+      : null,
+  };
+
   useEffect(() => {
     console.log("[DriverActiveRide] location.state:", location.state);
     if (location.state?.activeRide) {
@@ -100,21 +109,35 @@ const DriverActiveRide: React.FC = () => {
     }
   }, [isLoaded, map, rideDetails]);
 
-  // Mock movement logic
+  // Request live driver location
   useEffect(() => {
     if (!rideDetails?.id || status === "completed") return;
 
-    // Simulate minor movement
-    const interval = setInterval(() => {
-      const mockLat = 40.7128 + (Math.random() * 0.001 - 0.0005);
-      const mockLng = -74.006 + (Math.random() * 0.001 - 0.0005);
-      socket.emit("updateLocation", {
-        rideId: rideDetails.id,
-        location: { lat: mockLat, lng: mockLng },
-      });
-    }, 4000);
+    let watchId: number | null = null;
+    let isSubscribed = true;
 
-    return () => clearInterval(interval);
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          if (!isSubscribed) return;
+          const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setDriverLoc(newLoc);
+          socket.emit("updateLocation", {
+            rideId: rideDetails.id,
+            location: newLoc,
+          });
+        },
+        (err) => console.warn("Driver location error:", err),
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
+    }
+
+    return () => {
+      isSubscribed = false;
+      if (watchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, [status, rideDetails]);
 
   const handleAction = () => {
@@ -210,7 +233,7 @@ const DriverActiveRide: React.FC = () => {
           {isLoaded && (
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "100%" }}
-              center={{ lat: 40.7128, lng: -74.006 }}
+              center={driverLoc || { lat: 40.7128, lng: -74.006 }}
               zoom={14}
               options={{
                 zoomControl: false,
@@ -222,6 +245,9 @@ const DriverActiveRide: React.FC = () => {
             >
               {directionsResponse && (
                 <DirectionsRenderer directions={directionsResponse} />
+              )}
+              {driverLoc && customCarIcon.scaledSize && (
+                <Marker position={driverLoc} icon={customCarIcon as google.maps.Icon} />
               )}
             </GoogleMap>
           )}
