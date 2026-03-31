@@ -5,7 +5,6 @@ import {
   IonContent,
   IonButton,
   IonIcon,
-  IonLoading,
   IonSpinner,
   useIonToast,
 } from "@ionic/react";
@@ -19,6 +18,7 @@ import {
   trashOutline,
   timeOutline,
   shieldCheckmarkOutline,
+  flashOutline,
 } from "ionicons/icons";
 import axios from "axios";
 import "./DriverVerification.css";
@@ -43,7 +43,7 @@ const statusLabels: Record<string, string> = {
   pending: "Not submitted",
   submitted: "Submitted",
   approved: "Completed",
-  rejected: "Rejected — resubmit",
+  rejected: "Rejected - resubmit",
 };
 
 const bannerConfig: Record<string, { icon: string; title: string; desc: string }> = {
@@ -72,6 +72,7 @@ const bannerConfig: Record<string, { icon: string; title: string; desc: string }
 const DriverVerification: React.FC = () => {
   const [verification, setVerification] = useState<Verification | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [activeDoc, setActiveDoc] = useState<DocItem | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -84,11 +85,13 @@ const DriverVerification: React.FC = () => {
   const headers = { "x-auth-token": token };
 
   const fetchStatus = async () => {
+    setError(null);
     try {
       const res = await axios.get(`${apiUrl}/verification/status`, { headers });
       setVerification(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching verification status", err);
+      setError(err.response?.data?.msg || "Failed to load verification status");
     } finally {
       setLoading(false);
     }
@@ -102,7 +105,6 @@ const DriverVerification: React.FC = () => {
     if (verification?.status === "pending_review" || verification?.status === "approved") return;
     if (doc.status === "approved") return;
 
-    // Terms and Conditions is accept-only
     if (doc.name === "Terms and Conditions") {
       handleAcceptDoc(doc.name);
       return;
@@ -142,9 +144,7 @@ const DriverVerification: React.FC = () => {
       await axios.post(
         `${apiUrl}/verification/upload/${encodeURIComponent(activeDoc.name)}`,
         formData,
-        {
-          headers: { ...headers, "Content-Type": "multipart/form-data" },
-        }
+        { headers: { ...headers, "Content-Type": "multipart/form-data" } }
       );
 
       present({ message: "Document uploaded!", duration: 2000, color: "success" });
@@ -162,20 +162,12 @@ const DriverVerification: React.FC = () => {
     try {
       setUploading(true);
       await axios.post(`${apiUrl}/verification/submit`, {}, { headers });
-      present({
-        message: "Documents submitted for review!",
-        duration: 3000,
-        color: "success",
-      });
+      present({ message: "Documents submitted for review!", duration: 3000, color: "success" });
       fetchStatus();
     } catch (err: any) {
       const missing = err.response?.data?.missing;
       if (missing) {
-        present({
-          message: `Missing: ${missing.join(", ")}`,
-          duration: 4000,
-          color: "warning",
-        });
+        present({ message: `Missing: ${missing.join(", ")}`, duration: 4000, color: "warning" });
       } else {
         present({ message: "Submission failed", duration: 2500, color: "danger" });
       }
@@ -184,19 +176,29 @@ const DriverVerification: React.FC = () => {
     }
   };
 
-  const getDocIcon = (status: string) => {
-    switch (status) {
-      case "submitted":
-        return cloudUploadOutline;
-      case "approved":
-        return checkmarkCircle;
-      case "rejected":
-        return closeCircle;
-      default:
-        return documentTextOutline;
+  const handleQuickVerify = async () => {
+    setUploading(true);
+    try {
+      await axios.post(`${apiUrl}/verification/quick-verify`, {}, { headers });
+      present({ message: "Account verified! You can now accept rides.", duration: 3000, color: "success" });
+      await fetchStatus();
+    } catch {
+      present({ message: "Quick verify failed", duration: 2500, color: "danger" });
+    } finally {
+      setUploading(false);
     }
   };
 
+  const getDocIcon = (status: string) => {
+    switch (status) {
+      case "submitted": return cloudUploadOutline;
+      case "approved": return checkmarkCircle;
+      case "rejected": return closeCircle;
+      default: return documentTextOutline;
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <IonPage>
@@ -209,7 +211,44 @@ const DriverVerification: React.FC = () => {
     );
   }
 
-  if (!verification) return null;
+  // Error state — show error with retry instead of blank page
+  if (error || !verification) {
+    return (
+      <IonPage>
+        <IonContent className="verification-content">
+          <div className="verification-container" style={{ paddingTop: 80 }}>
+            <div className="verification-header">
+              <div className="verification-back-row">
+                <IonButton fill="clear" className="verification-back-btn" onClick={() => history.goBack()}>
+                  <IonIcon icon={arrowBack} slot="icon-only" />
+                </IonButton>
+              </div>
+              <h1>Driver Verification</h1>
+              <p style={{ color: "#ef4444", marginTop: 12 }}>{error || "Could not load verification data."}</p>
+            </div>
+
+            <IonButton expand="block" className="submit-all-btn" onClick={() => { setLoading(true); fetchStatus(); }} style={{ marginTop: 24 }}>
+              Retry
+            </IonButton>
+
+            <div style={{ textAlign: "center", margin: "32px 0 0" }}>
+              <p style={{ fontSize: "0.8rem", color: "#a1a1aa", marginBottom: 12 }}>Or skip verification for demo</p>
+              <IonButton expand="block" color="warning" onClick={handleQuickVerify} disabled={uploading}>
+                <IonIcon icon={flashOutline} slot="start" />
+                {uploading ? "Verifying..." : "Quick Verify (Demo)"}
+              </IonButton>
+            </div>
+
+            <div className="skip-link">
+              <IonButton fill="clear" onClick={() => history.push("/driver/home")}>
+                Go to Dashboard
+              </IonButton>
+            </div>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   const docs = verification.documents;
   const submitted = docs.filter((d) => d.status !== "pending").length;
@@ -225,11 +264,7 @@ const DriverVerification: React.FC = () => {
           {/* Header */}
           <div className="verification-header">
             <div className="verification-back-row">
-              <IonButton
-                fill="clear"
-                className="verification-back-btn"
-                onClick={() => history.goBack()}
-              >
+              <IonButton fill="clear" className="verification-back-btn" onClick={() => history.goBack()}>
                 <IonIcon icon={arrowBack} slot="icon-only" />
               </IonButton>
             </div>
@@ -247,6 +282,22 @@ const DriverVerification: React.FC = () => {
                 : banner.desc}</p>
             </div>
           </div>
+
+          {/* Quick Verify Demo Button */}
+          {(verification.status === "incomplete" || verification.status === "rejected") && (
+            <div className="quick-verify-section">
+              <IonButton
+                expand="block"
+                className="quick-verify-btn"
+                onClick={handleQuickVerify}
+                disabled={uploading}
+              >
+                <IonIcon icon={flashOutline} slot="start" />
+                {uploading ? "Verifying..." : "Quick Verify (Demo)"}
+              </IonButton>
+              <p className="quick-verify-hint">Skip document upload for demo purposes</p>
+            </div>
+          )}
 
           {/* Progress */}
           <div className="verification-progress">
@@ -270,9 +321,7 @@ const DriverVerification: React.FC = () => {
                   </div>
                   <div className="doc-info">
                     <h4>{doc.name}</h4>
-                    <p className={`doc-subtitle ${doc.status}`}>
-                      {statusLabels[doc.status]}
-                    </p>
+                    <p className={`doc-subtitle ${doc.status}`}>{statusLabels[doc.status]}</p>
                   </div>
                 </div>
                 <div className="doc-item-right">
@@ -295,9 +344,7 @@ const DriverVerification: React.FC = () => {
                       </div>
                       <div className="doc-info">
                         <h4>{doc.name}</h4>
-                        <p className={`doc-subtitle ${doc.status}`}>
-                          {statusLabels[doc.status]}
-                        </p>
+                        <p className={`doc-subtitle ${doc.status}`}>{statusLabels[doc.status]}</p>
                       </div>
                     </div>
                     <div className="doc-item-right">
@@ -325,13 +372,23 @@ const DriverVerification: React.FC = () => {
           )}
 
           {/* Skip for now */}
-          {verification.status === "incomplete" && (
+          {verification.status !== "approved" && (
             <div className="skip-link">
+              <IonButton fill="clear" onClick={() => history.push("/driver/home")}>
+                {verification.status === "approved" ? "Go to Dashboard" : "Skip for now"}
+              </IonButton>
+            </div>
+          )}
+
+          {/* Go to Dashboard when approved */}
+          {verification.status === "approved" && (
+            <div className="submit-all-section">
               <IonButton
-                fill="clear"
+                expand="block"
+                className="submit-all-btn"
                 onClick={() => history.push("/driver/home")}
               >
-                Skip for now
+                Go to Dashboard
               </IonButton>
             </div>
           )}
@@ -354,10 +411,7 @@ const DriverVerification: React.FC = () => {
               />
 
               {!selectedFile ? (
-                <div
-                  className="upload-dropzone"
-                  onClick={() => fileInputRef.current?.click()}
-                >
+                <div className="upload-dropzone" onClick={() => fileInputRef.current?.click()}>
                   <div className="upload-dropzone-icon">
                     <IonIcon icon={cloudUploadOutline} />
                   </div>
@@ -371,21 +425,14 @@ const DriverVerification: React.FC = () => {
                     <p>{selectedFile.name}</p>
                     <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
                   </div>
-                  <button
-                    className="upload-preview-remove"
-                    onClick={() => setSelectedFile(null)}
-                  >
+                  <button className="upload-preview-remove" onClick={() => setSelectedFile(null)}>
                     <IonIcon icon={trashOutline} />
                   </button>
                 </div>
               )}
 
               <div className="upload-sheet-actions">
-                <IonButton
-                  expand="block"
-                  className="upload-btn-secondary"
-                  onClick={() => setActiveDoc(null)}
-                >
+                <IonButton expand="block" className="upload-btn-secondary" onClick={() => setActiveDoc(null)}>
                   Cancel
                 </IonButton>
                 <IonButton
@@ -400,8 +447,6 @@ const DriverVerification: React.FC = () => {
             </div>
           </div>
         )}
-
-        <IonLoading isOpen={uploading} message="Uploading..." spinner="crescent" mode="ios" />
       </IonContent>
     </IonPage>
   );

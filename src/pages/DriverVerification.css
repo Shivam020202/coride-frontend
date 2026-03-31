@@ -464,3 +464,27 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ── Quick Verify Demo ── */
+.quick-verify-section {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.quick-verify-btn {
+  --background: linear-gradient(135deg, #f59e0b, #d97706);
+  --background-hover: #d97706;
+  --color: #ffffff;
+  --border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  height: 50px;
+  text-transform: none;
+  --box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.quick-verify-hint {
+  font-size: 0.72rem;
+  color: #a1a1aa;
+  margin: 8px 0 0;
+}
