@@ -122,7 +122,7 @@ const DriverProfile: React.FC = () => {
               <IonLabel>Safety & Trust</IonLabel>
             </IonItem>
 
-            <IonItem button detail className="profile-item" onClick={() => history.push("/driver/verification")}>
+            <IonItem button detail className="profile-item" onClick={() => history.push("/verification")}>
               <div slot="start" className="item-icon-wrapper bg-gray">
                 <IonIcon icon={documentTextOutline} />
               </div>

@@ -141,7 +141,7 @@ const DriverHome: React.FC = () => {
   const toggleStatus = () => {
     if (!verified && !online) {
       present({ message: "Complete verification to go online.", duration: 2500, color: "warning" });
-      history.push("/driver/verification");
+      history.push("/verification");
       return;
     }
     setOnline(!online);
@@ -195,7 +195,7 @@ const DriverHome: React.FC = () => {
                 marginBottom: 16,
                 cursor: "pointer",
               }}
-              onClick={() => history.push("/driver/verification")}
+              onClick={() => history.push("/verification")}
             >
               <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: "1.5rem", color: "#d97706" }} />
               <div>

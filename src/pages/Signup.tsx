@@ -50,7 +50,7 @@ const Signup: React.FC = () => {
         duration: 2000,
         color: "success",
       });
-      history.push(role === "consumer" ? "/tabs/home" : "/driver/verification");
+      history.push(role === "consumer" ? "/tabs/home" : "/verification");
     } catch (error: any) {
       setLoading(false);
       present({
