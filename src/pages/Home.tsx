@@ -26,6 +26,8 @@ import {
 } from "@react-google-maps/api";
 import socket from "../socket";
 import "./Home.css";
+import SedanIcon from "../assets/sedan.png";
+import SuvIcon from "../assets/Suv.png";
 
 const libraries: "places"[] = ["places"];
 
@@ -406,7 +408,7 @@ const Home: React.FC = () => {
                     <IonItem lines="none" className="ride-item selected" onClick={bookRide}>
                       <img
                         slot="start"
-                        src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,w_956,h_637/v1555367310/assets/30/51e602-10bb-4e65-b122-e394d80a1c97/original/UberX_Transparent.png"
+                        src={SedanIcon}
                         className="car-icon"
                         alt="CoRide X"
                       />
@@ -422,7 +424,7 @@ const Home: React.FC = () => {
                     <IonItem lines="none" className="ride-item" onClick={bookRide}>
                       <img
                         slot="start"
-                        src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,w_956,h_637/v1555367538/assets/31/ad21b7-595c-42e8-ac53-53966b4a5fee/original/Black_v1.png"
+                        src={SuvIcon}
                         className="car-icon"
                         alt="CoRide Premium"
                       />
