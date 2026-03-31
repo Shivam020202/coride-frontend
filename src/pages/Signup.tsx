@@ -32,7 +32,7 @@ const Signup: React.FC = () => {
 
     try {
       const apiUrl =
-        import.meta.env.VITE_API_URL || "https://localhost:5000/api";
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const response = await axios.post(`${apiUrl}/auth/register`, {
         name,
         email,
@@ -50,7 +50,7 @@ const Signup: React.FC = () => {
         duration: 2000,
         color: "success",
       });
-      history.push(role === "consumer" ? "/tabs/home" : "/driver/home");
+      history.push(role === "consumer" ? "/tabs/home" : "/driver/verification");
     } catch (error: any) {
       setLoading(false);
       present({

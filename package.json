@@ -15,6 +15,8 @@
     "@ionic/react": "^8.7.18",
     "@ionic/react-router": "^8.7.18",
     "@react-google-maps/api": "^2.20.8",
+    "@stripe/react-stripe-js": "^6.0.0",
+    "@stripe/stripe-js": "^9.0.0",
     "@types/leaflet": "^1.9.21",
     "@types/react-router": "^5.1.20",
     "@types/react-router-dom": "^5.3.3",

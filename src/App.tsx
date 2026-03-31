@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Redirect, Route } from "react-router-dom";
 import {
   IonApp,
@@ -8,6 +8,7 @@ import {
   IonTabBar,
   IonTabButton,
   IonTabs,
+  IonSpinner,
   setupIonicReact,
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
@@ -17,9 +18,11 @@ import {
   personOutline,
   cardOutline,
 } from "ionicons/icons";
+import axios from "axios";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import RideHistory from "./pages/RideHistory";
 import ActiveRide from "./pages/ActiveRide";
@@ -32,6 +35,7 @@ import DriverHistory from "./pages/DriverHistory";
 import DriverProfile from "./pages/DriverProfile";
 import DriverActiveRide from "./pages/DriverActiveRide";
 import TrackRide from "./pages/TrackRide";
+import DriverVerification from "./pages/DriverVerification";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -108,21 +112,68 @@ const DriverTabs: React.FC = () => (
   </IonTabs>
 );
 
+const AuthGuard: React.FC = () => {
+  const [checking, setChecking] = useState(true);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      if (!token || !role) {
+        setRedirectTo("/login");
+        setChecking(false);
+        return;
+      }
+
+      try {
+        const apiUrl =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        await axios.get(`${apiUrl}/auth/me`, {
+          headers: { "x-auth-token": token },
+        });
+        // Token is valid — redirect based on role
+        setRedirectTo(role === "driver" ? "/driver/home" : "/tabs/home");
+      } catch {
+        // Token expired or invalid — clear and send to login
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        setRedirectTo("/login");
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (checking) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <IonSpinner name="crescent" />
+      </div>
+    );
+  }
+
+  return <Redirect to={redirectTo!} />;
+};
+
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
       <IonRouterOutlet>
         <Route exact path="/login" component={Login} />
         <Route exact path="/signup" component={Signup} />
+        <Route exact path="/forgot-password" component={ForgotPassword} />
         <Route exact path="/active-ride" component={ActiveRide} />
         <Route exact path="/driver/active-ride" component={DriverActiveRide} />
         <Route exact path="/settings" component={Settings} />
         <Route exact path="/track" component={TrackRide} />
+        <Route exact path="/driver/verification" component={DriverVerification} />
         <Route path="/tabs" component={MainTabs} />
         <Route path="/driver" component={DriverTabs} />
-        <Route exact path="/">
-          <Redirect to="/login" />
-        </Route>
+        <Route exact path="/" component={AuthGuard} />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>

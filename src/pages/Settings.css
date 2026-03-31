@@ -65,17 +65,13 @@
   font-weight: 600;
 }
 
+.settings-logout-item ion-icon {
+  color: #dc2626 !important;
+}
+
 .settings-footer {
   text-align: center;
   padding: 2rem;
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.settings-footer p {
-  color: #dc2626;
-  margin-top: 0;
-  margin-bottom: 1rem;
 }
 
 .settings-footer small {

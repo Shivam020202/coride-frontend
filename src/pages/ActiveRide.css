@@ -444,6 +444,148 @@
   line-height: 1.5;
 }
 
+/* ── Rating Modal ──────────────────────────────────────────────────────────── */
+.rating-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: overlay-in 0.25s ease;
+}
+
+.rating-panel {
+  background: #ffffff;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 380px;
+  padding: 36px 28px 32px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  animation: rating-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rating-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.rating-checkmark {
+  margin-bottom: 16px;
+}
+
+.rating-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.rating-fare {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #18181b;
+  margin: 8px 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.rating-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 24px 0;
+  font-weight: 500;
+}
+
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rating-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rating-star:active {
+  transform: scale(1.25);
+}
+
+.rating-star.active svg {
+  filter: drop-shadow(0 2px 4px rgba(24, 24, 27, 0.2));
+}
+
+.rating-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin: 4px 0 24px 0;
+  min-height: 1.2em;
+}
+
+.rating-submit-btn {
+  width: 100%;
+  background: #18181b;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  margin-bottom: 10px;
+}
+
+.rating-submit-btn:disabled {
+  background: #d4d4d8;
+  cursor: not-allowed;
+}
+
+.rating-submit-btn:not(:disabled):active {
+  transform: scale(0.97);
+  background: #27272a;
+}
+
+.rating-skip-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: color 0.15s ease;
+}
+
+.rating-skip-btn:hover {
+  color: #64748b;
+}
+
+/* ── Payment Details ───────────────────────────────────────────────────────── */
+.payment-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
 /* ── Responsive tweaks ──────────────────────────────────────────────────────── */
 @media (max-width: 360px) {
   .ride-status-text { font-size: 1.35rem; }

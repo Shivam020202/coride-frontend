@@ -28,8 +28,15 @@ import {
   DirectionsRenderer,
   Marker,
 } from "@react-google-maps/api";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import axios from "axios";
 import socket from "../socket";
 import "./ActiveRide.css";
+
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
+);
 
 const libraries: "places"[] = ["places"];
 
@@ -38,6 +45,57 @@ const genToken = () =>
   Math.random().toString(36).substring(2, 10) +
   Math.random().toString(36).substring(2, 10);
 
+// ── Stripe Checkout Form ─────────────────────────────────────────────────────
+const CheckoutForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    setError(null);
+
+    const { error: stripeError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.origin + "/tabs/home",
+      },
+      redirect: "if_required",
+    });
+
+    if (stripeError) {
+      setError(stripeError.message || "Payment failed");
+      setProcessing(false);
+    } else {
+      setProcessing(false);
+      onSuccess();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <PaymentElement />
+      {error && (
+        <p style={{ color: "#ef4444", fontSize: "0.8rem", margin: "10px 0 0", textAlign: "center" }}>
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="rating-submit-btn"
+        style={{ marginTop: 16 }}
+      >
+        {processing ? "Processing..." : "Pay Now"}
+      </button>
+    </form>
+  );
+};
+
 const ActiveRide: React.FC = () => {
   const history = useHistory();
   const location = useLocation<{
@@ -45,6 +103,7 @@ const ActiveRide: React.FC = () => {
     destination: string;
     distance: string;
     duration: string;
+    price?: string;
     driverName?: string;
     driverCar?: string;
     driverLicense?: string;
@@ -57,6 +116,7 @@ const ActiveRide: React.FC = () => {
     destination: "Washington Square Park, NY",
     distance: "2.1 mi",
     duration: "10 min",
+    price: "25.00",
     driverName: "John D.",
     driverCar: "White Toyota Prius",
     driverLicense: "ABC 123",
@@ -66,10 +126,20 @@ const ActiveRide: React.FC = () => {
   };
 
   const [rideStatus, setRideStatus] = useState("picking_up");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [driverLocation, setDriverLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const token = localStorage.getItem("token");
 
   // ── Share state ─────────────────────────────────────────────────────────────
   const [isSharing, setIsSharing] = useState(false);
@@ -104,10 +174,21 @@ const ActiveRide: React.FC = () => {
       if (!state.origin || !state.destination) return;
       const directionsService = new window.google.maps.DirectionsService();
 
-      let reqOrigin = state.origin;
-      if (reqOrigin === "Current Location") reqOrigin = "New York, NY";
-      let reqDest = state.destination;
-      if (reqDest === "Unknown Destination") reqDest = "Central Park, NY";
+      let reqOrigin: string | google.maps.LatLngLiteral = state.origin;
+      let reqDest: string = state.destination;
+
+      // If origin is "Current Location", use the browser's actual GPS
+      if (reqOrigin === "Current Location" && navigator.geolocation) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true })
+          );
+          reqOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch {
+          // GPS failed — fall back to driver location if available
+          if (driverLocation) reqOrigin = driverLocation;
+        }
+      }
 
       try {
         const results = await directionsService.route({
@@ -127,7 +208,9 @@ const ActiveRide: React.FC = () => {
         }
       } catch (err) {
         console.error("Error calculating directions in ActiveRide", err);
-        map?.setCenter({ lat: 40.7128, lng: -74.006 });
+        if (driverLocation) {
+          map?.setCenter(driverLocation);
+        }
         map?.setZoom(12);
       }
     };
@@ -147,9 +230,9 @@ const ActiveRide: React.FC = () => {
       } else if (status === "in_transit") {
         present({ message: "Heading to destination!", duration: 3000, color: "primary" });
       } else if (status === "completed") {
-        present({ message: "Ride completed. Thanks for riding!", duration: 4000, color: "success" });
         stopSharing();
-        history.replace("/tabs/home");
+        // Start payment flow
+        initiatePayment();
       }
     });
 
@@ -246,6 +329,47 @@ const ActiveRide: React.FC = () => {
       }
     }
     setShowEmergencyPanel(false);
+  };
+
+  // ── Payment Flow ─────────────────────────────────────────────────────────
+  const initiatePayment = async () => {
+    const price = parseFloat(state.price || "25.00");
+    setPaymentLoading(true);
+    try {
+      const res = await axios.post(
+        `${apiUrl}/payment/create-payment-intent`,
+        { amount: price, rideId: (state as any).rideId || "" },
+        { headers: { "x-auth-token": token } }
+      );
+      setPaymentClientSecret(res.data.clientSecret);
+      setPaymentIntentId(res.data.paymentIntentId);
+      setShowPaymentModal(true);
+    } catch (err) {
+      console.error("Payment intent failed:", err);
+      present({ message: "Payment setup failed. Please try again.", duration: 3000, color: "danger" });
+      // Still show rating even if payment fails
+      setShowRatingModal(true);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const onPaymentSuccess = async () => {
+    // Confirm payment on backend
+    try {
+      await axios.post(
+        `${apiUrl}/payment/confirm-payment`,
+        { paymentIntentId, rideId: (state as any).rideId || "" },
+        { headers: { "x-auth-token": token } }
+      );
+    } catch (err) {
+      console.error("Payment confirmation error:", err);
+    }
+    setShowPaymentModal(false);
+    setPaymentClientSecret(null);
+    present({ message: "Payment successful!", duration: 2000, color: "success" });
+    // Now show rating
+    setShowRatingModal(true);
   };
 
   const customCarIcon = {
@@ -426,6 +550,126 @@ const ActiveRide: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Rating modal overlay */}
+        {showRatingModal && (
+          <div className="rating-overlay">
+            <div className="rating-panel">
+              <div className="rating-checkmark">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="24" fill="#18181b" />
+                  <path d="M15 24.5L21 30.5L33 18.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h2 className="rating-title">Ride Complete!</h2>
+              <p className="rating-fare">${state.price || "25.00"}</p>
+              <p className="rating-subtitle">How was your ride with {state.driverName}?</p>
+
+              <div className="rating-stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    className={`rating-star ${star <= (hoverRating || rating) ? "active" : ""}`}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                  >
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill={star <= (hoverRating || rating) ? "#18181b" : "none"} stroke="#18181b" strokeWidth="1.5">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+              <p className="rating-label">
+                {rating === 0 ? "Tap to rate" : rating <= 2 ? "We're sorry to hear that" : rating <= 3 ? "Thanks for riding" : rating === 4 ? "Great ride!" : "Excellent!"}
+              </p>
+
+              <button
+                className="rating-submit-btn"
+                disabled={rating === 0}
+                onClick={() => {
+                  present({
+                    message: `You rated ${state.driverName} ${rating} star${rating > 1 ? "s" : ""}. Thanks!`,
+                    duration: 2500,
+                    color: "success",
+                  });
+                  setShowRatingModal(false);
+                  history.replace("/tabs/home");
+                }}
+              >
+                Submit Rating
+              </button>
+
+              <button
+                className="rating-skip-btn"
+                onClick={() => {
+                  setShowRatingModal(false);
+                  history.replace("/tabs/home");
+                }}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Payment loading overlay */}
+        {paymentLoading && (
+          <div className="rating-overlay">
+            <div className="rating-panel" style={{ padding: "48px 28px" }}>
+              <IonSpinner name="crescent" style={{ marginBottom: 16 }} />
+              <h2 className="rating-title" style={{ fontSize: "1.2rem" }}>Preparing Payment...</h2>
+              <p className="rating-subtitle">Setting up secure checkout</p>
+            </div>
+          </div>
+        )}
+
+        {/* Stripe Payment Modal */}
+        {showPaymentModal && paymentClientSecret && (
+          <div className="rating-overlay">
+            <div className="rating-panel" style={{ maxWidth: 420, padding: "32px 24px 28px" }}>
+              <div className="rating-checkmark">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="24" fill="#18181b" />
+                  <path d="M15 24.5L21 30.5L33 18.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h2 className="rating-title">Ride Complete!</h2>
+              <p className="rating-fare">${state.price || "25.00"}</p>
+              <p className="rating-subtitle" style={{ marginBottom: 16 }}>
+                {state.origin} → {state.destination}
+              </p>
+
+              <div className="payment-details-row">
+                <span>Ride fare</span>
+                <span>${state.price || "25.00"}</span>
+              </div>
+              <div className="payment-details-row" style={{ borderBottom: "none", fontWeight: 700, color: "#0f172a" }}>
+                <span>Total</span>
+                <span>${state.price || "25.00"}</span>
+              </div>
+
+              <div style={{ margin: "20px 0 16px", textAlign: "left" }}>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: paymentClientSecret,
+                    appearance: {
+                      theme: "stripe",
+                      variables: {
+                        colorPrimary: "#18181b",
+                        borderRadius: "12px",
+                        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                      },
+                    },
+                  }}
+                >
+                  <CheckoutForm onSuccess={onPaymentSuccess} />
+                </Elements>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Emergency modal overlay */}
         {showEmergencyPanel && (

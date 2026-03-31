@@ -16,7 +16,6 @@ import axios from "axios";
 import {
   cashOutline,
   cardOutline,
-  logoApple,
   addOutline,
   chevronForward,
   pricetagOutline,
@@ -31,8 +30,7 @@ const Wallet: React.FC = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const apiUrl =
-          import.meta.env.VITE_API_URL || "https://localhost:5000/api";
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const res = await axios.get(`${apiUrl}/auth/me`, {
           headers: { "x-auth-token": token },
         });
@@ -45,16 +43,6 @@ const Wallet: React.FC = () => {
     };
     fetchUser();
   }, []);
-
-  const generateBalance = () => {
-    if (!user) return "0.00";
-    // simple hash trick
-    let hash = 0;
-    for (let i = 0; i < user.email.length; i++) {
-      hash = user.email.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return Math.abs((hash % 10000) / 100).toFixed(2);
-  };
 
   return (
     <IonPage>
@@ -71,9 +59,9 @@ const Wallet: React.FC = () => {
             {loading ? (
               <IonSpinner name="dots" color="light" />
             ) : (
-              <h1 className="wallet-amount">${generateBalance()}</h1>
+              <h1 className="wallet-amount">$0.00</h1>
             )}
-            <p className="auto-refill-text">Auto-refill is enabled</p>
+            <p className="auto-refill-text">{user?.name || "Your"} wallet</p>
           </div>
           <IonButton className="add-funds-btn" fill="clear">
             <IonIcon slot="start" icon={addOutline} />
@@ -86,21 +74,11 @@ const Wallet: React.FC = () => {
           <IonList className="wallet-list" lines="none">
             <IonItem className="wallet-item">
               <div slot="start" className="item-icon-wrapper bg-gray">
-                <IonIcon icon={logoApple} />
-              </div>
-              <IonLabel>
-                <h2>Apple Pay</h2>
-              </IonLabel>
-              <IonIcon slot="end" icon={chevronForward} color="medium" />
-            </IonItem>
-
-            <IonItem className="wallet-item">
-              <div slot="start" className="item-icon-wrapper bg-gray">
                 <IonIcon icon={cardOutline} />
               </div>
               <IonLabel>
-                <h2>Personal •••• 4545</h2>
-                <p>Expires 12/26</p>
+                <h2>Credit / Debit Card</h2>
+                <p>Pay with card via Stripe</p>
               </IonLabel>
               <IonIcon slot="end" icon={chevronForward} color="medium" />
             </IonItem>
@@ -111,15 +89,12 @@ const Wallet: React.FC = () => {
               </div>
               <IonLabel>
                 <h2>Cash</h2>
+                <p>Pay the driver directly</p>
               </IonLabel>
               <IonIcon slot="end" icon={chevronForward} color="medium" />
             </IonItem>
 
-            <IonItem
-              button
-              detail={false}
-              className="wallet-item add-payment-item"
-            >
+            <IonItem button detail={false} className="wallet-item add-payment-item">
               <div slot="start" className="item-icon-wrapper bg-transparent">
                 <IonIcon icon={addOutline} color="dark" />
               </div>

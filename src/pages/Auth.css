@@ -230,3 +230,66 @@
   font-size: 0.95rem;
   color: #18181b;
 }
+
+/* ── Forgot Password Page ── */
+.fp-back-row {
+  margin-bottom: 8px;
+  margin-left: -12px;
+}
+
+.fp-back-btn {
+  --color: #18181b;
+  --padding-start: 0;
+  --padding-end: 0;
+  font-size: 1.25rem;
+  min-height: 0;
+  height: auto;
+}
+
+/* ── OTP Input ── */
+.otp-input-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 24px 0 8px;
+}
+
+.otp-box {
+  width: 48px;
+  height: 56px;
+  border: 1.5px solid #e4e4e7;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #18181b;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  caret-color: #18181b;
+  -moz-appearance: textfield;
+}
+
+.otp-box::-webkit-outer-spin-button,
+.otp-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.otp-box:focus {
+  border-color: #18181b;
+  background: #ffffff;
+}
+
+.fp-resend-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  margin-top: 16px;
+}
+
+.fp-resend-row ion-text {
+  font-size: 0.825rem;
+  color: #a1a1aa;
+}

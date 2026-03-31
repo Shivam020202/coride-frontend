@@ -12,7 +12,7 @@ import {
   IonRefresher,
   IonRefresherContent,
 } from "@ionic/react";
-import { personCircleOutline, carOutline, timeOutline } from "ionicons/icons";
+import { personCircleOutline, carOutline, timeOutline, shieldCheckmarkOutline } from "ionicons/icons";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
 import socket from "../socket";
@@ -33,6 +33,7 @@ const DriverHome: React.FC = () => {
   const [requests, setRequests] = useState<RideRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [verified, setVerified] = useState(true);
   const [present] = useIonToast();
   const history = useHistory();
 
@@ -41,11 +42,12 @@ const DriverHome: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         const apiUrl =
-          import.meta.env.VITE_API_URL || "https://localhost:5000/api";
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         const res = await axios.get(`${apiUrl}/auth/me`, {
           headers: { "x-auth-token": token },
         });
         setUser(res.data);
+        setVerified(res.data.verified === true);
 
         socket.connect();
         const userId = res.data._id || res.data.id;
@@ -75,7 +77,7 @@ const DriverHome: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const apiUrl =
-        import.meta.env.VITE_API_URL || "https://localhost:5000/api";
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const res = await axios.get(`${apiUrl}/driver/requests`, {
         headers: { "x-auth-token": token },
       });
@@ -137,6 +139,11 @@ const DriverHome: React.FC = () => {
   }, [online, present, history]);
 
   const toggleStatus = () => {
+    if (!verified && !online) {
+      present({ message: "Complete verification to go online.", duration: 2500, color: "warning" });
+      history.push("/driver/verification");
+      return;
+    }
     setOnline(!online);
     if (online) {
       setRequests([]);
@@ -151,14 +158,14 @@ const DriverHome: React.FC = () => {
   const acceptRequest = async (id: string) => {
     if (!user) return;
     const driverId = user._id || user.id;
-    socket.emit("acceptRide", { 
-      requestId: id, 
+    socket.emit("acceptRide", {
+      requestId: id,
       driverId,
       driverName: user.name,
-      driverCar: "Black Toyota Camry",
-      driverLicense: "XCV 456",
-      driverRating: "4.9 ★",
-      driverImg: "https://minhas-avatars.s3.amazonaws.com/default.png"
+      driverCar: user.vehicleInfo || "Sedan",
+      driverLicense: user.licensePlate || "N/A",
+      driverRating: user.rating || "New",
+      driverImg: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`,
     });
   };
 
@@ -175,6 +182,32 @@ const DriverHome: React.FC = () => {
         </IonRefresher>
 
         <div className="driver-dashboard">
+          {!verified && (
+            <div
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #fde68a",
+                borderRadius: 14,
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 16,
+                cursor: "pointer",
+              }}
+              onClick={() => history.push("/driver/verification")}
+            >
+              <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: "1.5rem", color: "#d97706" }} />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "#18181b" }}>
+                  Verification Required
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "#92400e" }}>
+                  Complete your documents to start accepting rides.
+                </div>
+              </div>
+            </div>
+          )}
           <div className="driver-status-card">
             <h2>{online ? "You are Online" : "You are Offline"}</h2>
             <IonButton
