@@ -91,6 +91,7 @@ const DriverTabs: React.FC = () => (
       <Route exact path="/driver/active-ride" component={DriverActiveRide} />
       <Route exact path="/driver/history" component={DriverHistory} />
       <Route exact path="/driver/profile" component={DriverProfile} />
+      <Route exact path="/driver/verification" component={DriverVerification} />
       <Route exact path="/driver">
         <Redirect to="/driver/home" />
       </Route>
@@ -170,7 +171,6 @@ const App: React.FC = () => (
         <Route exact path="/driver/active-ride" component={DriverActiveRide} />
         <Route exact path="/settings" component={Settings} />
         <Route exact path="/track" component={TrackRide} />
-        <Route exact path="/driver/verification" component={DriverVerification} />
         <Route path="/tabs" component={MainTabs} />
         <Route path="/driver" component={DriverTabs} />
         <Route exact path="/" component={AuthGuard} />
