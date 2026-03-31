@@ -34,16 +34,23 @@ const ForgotPassword: React.FC = () => {
     if (!email) return;
     setLoading(true);
 
+    // Safety timeout — never stay loading for more than 25s
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+      present({ message: "Request timed out. Please try again.", duration: 3000, color: "danger" });
+    }, 25000);
+
     try {
-      await axios.post(`${apiUrl}/auth/forgot-password`, { email });
+      await axios.post(`${apiUrl}/auth/forgot-password`, { email }, { timeout: 20000 });
+      clearTimeout(safetyTimer);
       present({ message: "OTP sent to your email!", duration: 2500, color: "success" });
       setStep("otp");
     } catch (error: any) {
-      present({
-        message: error.response?.data?.msg || "Failed to send OTP.",
-        duration: 3000,
-        color: "danger",
-      });
+      clearTimeout(safetyTimer);
+      const msg = error.code === "ECONNABORTED"
+        ? "Request timed out. Please try again."
+        : error.response?.data?.msg || "Failed to send OTP.";
+      present({ message: msg, duration: 3000, color: "danger" });
     } finally {
       setLoading(false);
     }
