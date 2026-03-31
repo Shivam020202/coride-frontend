@@ -250,12 +250,12 @@ const DriverVerification: React.FC = () => {
     );
   }
 
-  const docs = verification.documents;
+  const docs = verification.documents || [];
   const submitted = docs.filter((d) => d.status !== "pending").length;
   const total = docs.length;
   const progress = total > 0 ? (submitted / total) * 100 : 0;
   const requiredDone = docs.filter((d) => d.required).every((d) => d.status !== "pending");
-  const banner = bannerConfig[verification.status];
+  const banner = bannerConfig[verification.status] || bannerConfig["incomplete"];
 
   return (
     <IonPage>
@@ -375,7 +375,7 @@ const DriverVerification: React.FC = () => {
           {verification.status !== "approved" && (
             <div className="skip-link">
               <IonButton fill="clear" onClick={() => history.push("/driver/home")}>
-                {verification.status === "approved" ? "Go to Dashboard" : "Skip for now"}
+                Skip for now
               </IonButton>
             </div>
           )}
