@@ -55,8 +55,9 @@ const Login: React.FC = () => {
         role,
       });
 
+      const actualRole = response.data.role;
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.data.role);
+      localStorage.setItem("role", actualRole);
 
       // Request location permission right after login (user gesture context active)
       // Do not await — runs in background so navigation isn't blocked
@@ -68,7 +69,7 @@ const Login: React.FC = () => {
         duration: 2000,
         color: "success",
       });
-      history.push(role === "consumer" ? "/tabs/home" : "/driver/home");
+      history.push(actualRole === "consumer" ? "/tabs/home" : "/driver/home");
     } catch (error: any) {
       setLoading(false);
       present({
