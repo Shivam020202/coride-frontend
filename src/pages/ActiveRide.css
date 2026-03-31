@@ -452,9 +452,11 @@
   backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: overlay-in 0.25s ease;
 }
 
@@ -467,6 +469,8 @@
   text-align: center;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
   animation: rating-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  margin: auto 0;
+  flex-shrink: 0;
 }
 
 @keyframes rating-pop {
@@ -592,5 +596,18 @@
   .circle-btn { width: 52px; height: 52px; }
   .action-circle span { font-size: 0.75rem; }
   .ride-bottom-sheet { padding: 20px 18px 36px 18px; }
+}
+
+@media (max-height: 700px) {
+  .rating-overlay { padding: 12px; }
+  .rating-panel { padding: 24px 20px 20px; border-radius: 20px; }
+  .rating-title { font-size: 1.25rem; }
+  .rating-fare { font-size: 1.5rem; }
+  .rating-submit-btn { padding: 14px; }
+}
+
+@media (max-width: 400px) {
+  .rating-overlay { padding: 12px; }
+  .rating-panel { padding: 24px 18px 20px; max-width: 100%; border-radius: 20px; }
 }
 

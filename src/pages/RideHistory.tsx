@@ -11,7 +11,7 @@ import {
   IonIcon,
   IonSpinner,
 } from "@ionic/react";
-import { star, locationOutline } from "ionicons/icons";
+import { star, locationOutline, checkmarkCircle } from "ionicons/icons";
 import axios from "axios";
 import "./RideHistory.css";
 
@@ -75,7 +75,7 @@ const RideHistory: React.FC = () => {
               <div
                 style={{ textAlign: "center", padding: "20px", color: "#666" }}
               >
-                No rides found.
+                No rides yet. Your completed trips will appear here.
               </div>
             ) : (
               rides.map((ride, idx) => (
@@ -91,13 +91,26 @@ const RideHistory: React.FC = () => {
                   <IonLabel>
                     <h2>{ride.destination}</h2>
                     <p>{formatDate(ride.date)}</p>
-                    <h3 className="car-type">{ride.type}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                      <span className="car-type">{ride.type}</span>
+                      {ride.paymentStatus === "paid" ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.7rem", color: "#16a34a", fontWeight: 600 }}>
+                          <IonIcon icon={checkmarkCircle} style={{ fontSize: "0.8rem" }} /> Paid
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: "0.7rem", color: "#f59e0b", fontWeight: 600 }}>
+                          Pending
+                        </span>
+                      )}
+                    </div>
                   </IonLabel>
                   <div className="price-details" slot="end">
                     <h2>${ride.price.toFixed(2)}</h2>
-                    <div className="rating">
-                      <span>{ride.rating}</span> <IonIcon icon={star} />
-                    </div>
+                    {ride.rating > 0 && (
+                      <div className="rating">
+                        <span>{ride.rating}</span> <IonIcon icon={star} />
+                      </div>
+                    )}
                   </div>
                 </IonItem>
               ))

@@ -17,8 +17,11 @@ interface HistoryItem {
   id: string;
   user: string;
   destination: string;
+  pickup: string;
   date: string;
   earnings: number;
+  paymentStatus: string;
+  rating: number;
 }
 
 const DriverHistory: React.FC = () => {
@@ -85,11 +88,14 @@ const DriverHistory: React.FC = () => {
                     </span>
                   </div>
                   <div className="history-route">
-                    <IonIcon icon={checkmarkCircle} color="success" />
+                    <IonIcon icon={checkmarkCircle} color={item.paymentStatus === "paid" ? "success" : "warning"} />
                     <div className="history-details">
                       <p className="history-user">{item.user}</p>
                       <p className="history-desc">
                         Drop-off: {item.destination}
+                      </p>
+                      <p style={{ fontSize: "0.75rem", margin: "2px 0 0", color: item.paymentStatus === "paid" ? "#16a34a" : "#f59e0b", fontWeight: 600 }}>
+                        {item.paymentStatus === "paid" ? "Payment received" : "Payment pending"}
                       </p>
                     </div>
                   </div>
@@ -97,7 +103,7 @@ const DriverHistory: React.FC = () => {
               ))}
               {history.length === 0 && (
                 <p style={{ textAlign: "center", color: "#666" }}>
-                  No trips completed yet.
+                  No trips completed yet. Completed rides will appear here.
                 </p>
               )}
             </div>
