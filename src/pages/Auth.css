@@ -293,3 +293,7 @@
   font-size: 0.825rem;
   color: #a1a1aa;
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -34,9 +34,8 @@ import axios from "axios";
 import socket from "../socket";
 import "./ActiveRide.css";
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
-);
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const libraries: "places"[] = ["places"];
 
@@ -625,7 +624,7 @@ const ActiveRide: React.FC = () => {
         )}
 
         {/* Stripe Payment Modal */}
-        {showPaymentModal && paymentClientSecret && (
+        {showPaymentModal && paymentClientSecret && stripePromise && (
           <div className="rating-overlay">
             <div className="rating-panel" style={{ maxWidth: 420, padding: "32px 24px 28px" }}>
               <div className="rating-checkmark">

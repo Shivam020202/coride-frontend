@@ -7,7 +7,6 @@ import {
   IonButton,
   IonText,
   IonItem,
-  IonLoading,
   IonIcon,
   useIonToast,
 } from "@ionic/react";
@@ -271,7 +270,22 @@ const ForgotPassword: React.FC = () => {
             </IonButton>
           </div>
         </div>
-        <IonLoading isOpen={loading} message={"Please wait..."} spinner="crescent" mode="ios" />
+        {loading && (
+          <div style={{
+            position: "fixed", inset: 0, background: "rgba(255,255,255,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999, backdropFilter: "blur(4px)",
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <div className="otp-loading-spinner" style={{
+                width: 36, height: 36, border: "3px solid #e4e4e7",
+                borderTopColor: "#18181b", borderRadius: "50%",
+                animation: "spin 0.7s linear infinite", margin: "0 auto 12px",
+              }} />
+              <p style={{ color: "#71717a", fontSize: "0.875rem", fontWeight: 500 }}>Please wait...</p>
+            </div>
+          </div>
+        )}
       </IonContent>
     </IonPage>
   );
