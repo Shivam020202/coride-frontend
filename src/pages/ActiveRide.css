@@ -452,11 +452,9 @@
   backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 24px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding: 16px;
   animation: overlay-in 0.25s ease;
 }
 
@@ -465,12 +463,14 @@
   border-radius: 28px;
   width: 100%;
   max-width: 380px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 36px 28px 32px;
   text-align: center;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
   animation: rating-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  margin: auto 0;
-  flex-shrink: 0;
 }
 
 @keyframes rating-pop {
@@ -576,6 +576,25 @@
 
 .rating-skip-btn:hover {
   color: #64748b;
+}
+
+/* ── Payment Modal Panel ───────────────────────────────────────────────────── */
+.payment-modal-panel {
+  padding: 24px 20px 20px;
+}
+
+.payment-modal-panel .rating-checkmark {
+  margin-bottom: 8px;
+}
+
+.payment-modal-panel .rating-title {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+.payment-modal-panel .rating-fare {
+  font-size: 1.6rem;
+  margin: 4px 0 8px 0;
 }
 
 /* ── Payment Details ───────────────────────────────────────────────────────── */

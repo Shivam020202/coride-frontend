@@ -626,18 +626,15 @@ const ActiveRide: React.FC = () => {
         {/* Stripe Payment Modal */}
         {showPaymentModal && paymentClientSecret && stripePromise && (
           <div className="rating-overlay">
-            <div className="rating-panel" style={{ maxWidth: 420, padding: "32px 24px 28px" }}>
+            <div className="rating-panel payment-modal-panel">
               <div className="rating-checkmark">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="24" fill="#18181b" />
                   <path d="M15 24.5L21 30.5L33 18.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <h2 className="rating-title">Ride Complete!</h2>
               <p className="rating-fare">${state.price || "25.00"}</p>
-              <p className="rating-subtitle" style={{ marginBottom: 16 }}>
-                {state.origin} → {state.destination}
-              </p>
 
               <div className="payment-details-row">
                 <span>Ride fare</span>
@@ -648,7 +645,7 @@ const ActiveRide: React.FC = () => {
                 <span>${state.price || "25.00"}</span>
               </div>
 
-              <div style={{ margin: "20px 0 16px", textAlign: "left" }}>
+              <div style={{ margin: "16px 0 12px", textAlign: "left" }}>
                 <Elements
                   stripe={stripePromise}
                   options={{
