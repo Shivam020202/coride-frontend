@@ -414,7 +414,7 @@ const ActiveRide: React.FC = () => {
           {isLoaded && (
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "100%" }}
-              center={{ lat: 40.7128, lng: -74.006 }}
+              center={carLoc || driverLocation || undefined}
               zoom={14}
               options={{ zoomControl: false, streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
               onLoad={onLoad}

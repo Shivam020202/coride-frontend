@@ -158,6 +158,21 @@ const DriverHome: React.FC = () => {
   const acceptRequest = async (id: string) => {
     if (!user) return;
     const driverId = user._id || user.id;
+
+    // Get driver's current GPS so the backend/rider gets a real location instead of a default
+    let driverLocation: { lat: number; lng: number } | null = null;
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+        })
+      );
+      driverLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch {
+      // GPS unavailable — backend will receive null and skip initial location
+    }
+
     socket.emit("acceptRide", {
       requestId: id,
       driverId,
@@ -166,6 +181,7 @@ const DriverHome: React.FC = () => {
       driverLicense: user.licensePlate || "N/A",
       driverRating: user.rating || "New",
       driverImg: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`,
+      driverLocation,
     });
   };
 

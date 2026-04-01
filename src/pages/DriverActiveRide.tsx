@@ -70,9 +70,9 @@ const DriverActiveRide: React.FC = () => {
     } else if (location.state?.requestId) {
       setRideDetails({
         id: location.state.requestId,
-        user: "Passenger",
-        destination: "Central Park, New York, NY",
-        pickup: "Times Square, New York, NY",
+        user: location.state.user || "Passenger",
+        destination: location.state.destination || "Destination",
+        pickup: location.state.pickup || "Pickup location",
       });
     }
   }, [location.state]);
