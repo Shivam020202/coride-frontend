@@ -130,6 +130,7 @@ const ActiveRide: React.FC = () => {
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [dbRideId, setDbRideId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [driverLocation, setDriverLocation] = useState<{
@@ -222,6 +223,10 @@ const ActiveRide: React.FC = () => {
       if (rideStatus === "picking_up") setCarLoc(loc);
     });
 
+    socket.on("rideDbId", (data: { rideId: string }) => {
+      setDbRideId(data.rideId);
+    });
+
     socket.on("rideStatusUpdate", (status: string) => {
       setRideStatus(status);
       if (status === "arrived") {
@@ -237,6 +242,7 @@ const ActiveRide: React.FC = () => {
 
     return () => {
       socket.off("driverLocationUpdate");
+      socket.off("rideDbId");
       socket.off("rideStatusUpdate");
     };
   }, [rideStatus, present, history]);
@@ -337,7 +343,7 @@ const ActiveRide: React.FC = () => {
     try {
       const res = await axios.post(
         `${apiUrl}/payment/create-payment-intent`,
-        { amount: price, rideId: (state as any).rideId || "" },
+        { amount: price, rideId: dbRideId || "" },
         { headers: { "x-auth-token": token } }
       );
       setPaymentClientSecret(res.data.clientSecret);
@@ -358,7 +364,7 @@ const ActiveRide: React.FC = () => {
     try {
       await axios.post(
         `${apiUrl}/payment/confirm-payment`,
-        { paymentIntentId, rideId: (state as any).rideId || "" },
+        { paymentIntentId, rideId: dbRideId || "" },
         { headers: { "x-auth-token": token } }
       );
     } catch (err) {

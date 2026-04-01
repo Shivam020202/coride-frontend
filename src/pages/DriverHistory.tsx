@@ -88,14 +88,14 @@ const DriverHistory: React.FC = () => {
                     </span>
                   </div>
                   <div className="history-route">
-                    <IonIcon icon={checkmarkCircle} color={item.paymentStatus === "paid" ? "success" : "warning"} />
+                    <IonIcon icon={checkmarkCircle} color="success" />
                     <div className="history-details">
                       <p className="history-user">{item.user}</p>
                       <p className="history-desc">
                         Drop-off: {item.destination}
                       </p>
-                      <p style={{ fontSize: "0.75rem", margin: "2px 0 0", color: item.paymentStatus === "paid" ? "#16a34a" : "#f59e0b", fontWeight: 600 }}>
-                        {item.paymentStatus === "paid" ? "Payment received" : "Payment pending"}
+                      <p style={{ fontSize: "0.75rem", margin: "2px 0 0", color: "#16a34a", fontWeight: 600 }}>
+                        Completed
                       </p>
                     </div>
                   </div>
