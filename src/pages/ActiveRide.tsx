@@ -131,6 +131,7 @@ const ActiveRide: React.FC = () => {
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [dbRideId, setDbRideId] = useState<string | null>(null);
+  const dbRideIdRef = useRef<string | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [driverLocation, setDriverLocation] = useState<{
@@ -225,18 +226,42 @@ const ActiveRide: React.FC = () => {
 
     socket.on("rideDbId", (data: { rideId: string }) => {
       setDbRideId(data.rideId);
+      dbRideIdRef.current = data.rideId;
     });
 
-    socket.on("rideStatusUpdate", (status: string) => {
+    socket.on("rideStatusUpdate", async (status: string) => {
       setRideStatus(status);
       if (status === "arrived") {
         present({ message: "Driver has arrived!", duration: 3000, color: "success" });
       } else if (status === "in_transit") {
         present({ message: "Heading to destination!", duration: 3000, color: "primary" });
       } else if (status === "completed") {
-        stopSharing();
-        // Start payment flow
-        initiatePayment();
+        // Stop sharing if active
+        if (locationWatchRef.current !== null) {
+          navigator.geolocation.clearWatch(locationWatchRef.current);
+          locationWatchRef.current = null;
+        }
+        setIsSharing(false);
+
+        // Start payment flow — use ref to get latest dbRideId
+        const price = parseFloat(state.price || "25.00");
+        setPaymentLoading(true);
+        try {
+          const res = await axios.post(
+            `${apiUrl}/payment/create-payment-intent`,
+            { amount: price, rideId: dbRideIdRef.current || "" },
+            { headers: { "x-auth-token": token } }
+          );
+          setPaymentClientSecret(res.data.clientSecret);
+          setPaymentIntentId(res.data.paymentIntentId);
+          setShowPaymentModal(true);
+        } catch (err) {
+          console.error("Payment intent failed:", err);
+          present({ message: "Payment setup failed.", duration: 3000, color: "danger" });
+          setShowRatingModal(true);
+        } finally {
+          setPaymentLoading(false);
+        }
       }
     });
 
@@ -245,7 +270,7 @@ const ActiveRide: React.FC = () => {
       socket.off("rideDbId");
       socket.off("rideStatusUpdate");
     };
-  }, [rideStatus, present, history]);
+  }, []);
 
   // Cleanup watcher on unmount
   useEffect(() => {
@@ -337,34 +362,12 @@ const ActiveRide: React.FC = () => {
   };
 
   // ── Payment Flow ─────────────────────────────────────────────────────────
-  const initiatePayment = async () => {
-    const price = parseFloat(state.price || "25.00");
-    setPaymentLoading(true);
-    try {
-      const res = await axios.post(
-        `${apiUrl}/payment/create-payment-intent`,
-        { amount: price, rideId: dbRideId || "" },
-        { headers: { "x-auth-token": token } }
-      );
-      setPaymentClientSecret(res.data.clientSecret);
-      setPaymentIntentId(res.data.paymentIntentId);
-      setShowPaymentModal(true);
-    } catch (err) {
-      console.error("Payment intent failed:", err);
-      present({ message: "Payment setup failed. Please try again.", duration: 3000, color: "danger" });
-      // Still show rating even if payment fails
-      setShowRatingModal(true);
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
   const onPaymentSuccess = async () => {
     // Confirm payment on backend
     try {
       await axios.post(
         `${apiUrl}/payment/confirm-payment`,
-        { paymentIntentId, rideId: dbRideId || "" },
+        { paymentIntentId, rideId: dbRideIdRef.current || dbRideId || "" },
         { headers: { "x-auth-token": token } }
       );
     } catch (err) {
@@ -599,7 +602,7 @@ const ActiveRide: React.FC = () => {
                     color: "success",
                   });
                   setShowRatingModal(false);
-                  history.replace("/tabs/home");
+                  history.push("/tabs/home");
                 }}
               >
                 Submit Rating
@@ -609,7 +612,7 @@ const ActiveRide: React.FC = () => {
                 className="rating-skip-btn"
                 onClick={() => {
                   setShowRatingModal(false);
-                  history.replace("/tabs/home");
+                  history.push("/tabs/home");
                 }}
               >
                 Skip
