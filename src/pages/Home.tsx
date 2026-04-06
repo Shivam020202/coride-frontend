@@ -52,19 +52,7 @@ const Home: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [presentToast] = useIonToast();
 
-  useEffect(() => {
-    const checkLocationPermission = async () => {
-      try {
-        if (navigator.permissions) {
-          const result = await navigator.permissions.query({ name: "geolocation" });
-          if (result.state === "prompt") {
-            navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 3000 });
-          }
-        }
-      } catch {}
-    };
-    checkLocationPermission();
-  }, []);
+  const [locationGranted, setLocationGranted] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -112,6 +100,13 @@ const Home: React.FC = () => {
   const onLoad = useCallback((map: google.maps.Map) => setMap(map), []);
   const onUnmount = useCallback(() => setMap(null), []);
 
+  useEffect(() => {
+    if (map && userLoc) {
+      map.panTo(userLoc);
+      map.setZoom(16);
+    }
+  }, [map, userLoc]);
+
   const getCurrentLocation = async () => {
     setIsGettingLoc(true);
     try {
@@ -124,6 +119,7 @@ const Home: React.FC = () => {
               duration: 4000,
               color: "danger",
             });
+            setLocationGranted(false);
             setIsGettingLoc(false);
             return;
           }
@@ -132,7 +128,14 @@ const Home: React.FC = () => {
 
       try {
         const cap = await Geolocation.checkPermissions();
-        if (cap.location !== "granted") await Geolocation.requestPermissions();
+        if (cap.location !== "granted") {
+          const requested = await Geolocation.requestPermissions();
+          if (requested.location !== "granted") {
+            setLocationGranted(false);
+            setIsGettingLoc(false);
+            return;
+          }
+        }
       } catch {}
 
       const loc = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
@@ -145,6 +148,7 @@ const Home: React.FC = () => {
 
       setUserLoc(loc);
       setMapCenter(loc);
+      setLocationGranted(true);
       map?.panTo(loc);
       map?.setZoom(16);
 
@@ -161,9 +165,10 @@ const Home: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Error getting location", err);
+      setLocationGranted(false);
       if (err?.code === 1) {
         presentToast({
-          message: "Location denied. Please allow location access in Settings.",
+          message: "Location denied. Please allow location access in Settings to book rides.",
           duration: 4000,
           color: "danger",
         });
@@ -179,7 +184,21 @@ const Home: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    getCurrentLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function calculateRoute() {
+    if (!locationGranted) {
+      presentToast({
+        message: "Location permission is required to calculate and book rides.",
+        duration: 3000,
+        color: "warning",
+      });
+      getCurrentLocation();
+      return;
+    }
     if (!originRef.current?.value || !destRef.current?.value) return;
     const directionsService = new window.google.maps.DirectionsService();
 
@@ -206,6 +225,10 @@ const Home: React.FC = () => {
   }
 
   const bookRide = () => {
+    if (!locationGranted) {
+      presentToast({ message: "Location permission is required to book a ride.", duration: 2000, color: "danger" });
+      return;
+    }
     if (!user) {
       presentToast({ message: "User not loaded", duration: 2000, color: "danger" });
       return;
@@ -331,6 +354,18 @@ const Home: React.FC = () => {
                 {getGreeting()}, {user?.name ? user.name.split(" ")[0] : "there"}
               </h2>
 
+              {!locationGranted && locationGranted !== null ? (
+                <div style={{ padding: "16px", textAlign: "center", border: "1px solid #ff4d4d", borderRadius: "8px", marginBottom: "16px", backgroundColor: "#fff0f0" }}>
+                  <h3 style={{ color: "#d32f2f", margin: "0 0 8px 0", fontSize: "16px" }}>Location Required</h3>
+                  <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#555" }}>
+                    Location access is strictly required to book a ride. Please enable it to continue.
+                  </p>
+                  <IonButton fill="outline" color="danger" size="small" onClick={getCurrentLocation}>
+                    Enable Location
+                  </IonButton>
+                </div>
+              ) : null}
+
               <div className="route-inputs">
                 <div className="input-with-icon">
                   <Autocomplete>
@@ -361,7 +396,7 @@ const Home: React.FC = () => {
                     }}
                   />
                 </Autocomplete>
-                <IonButton onClick={calculateRoute} className="go-btn" expand="block">
+                <IonButton onClick={calculateRoute} className="go-btn" expand="block" disabled={!locationGranted}>
                   <IonIcon icon={searchOutline} slot="start" />
                   Search Route
                 </IonButton>
