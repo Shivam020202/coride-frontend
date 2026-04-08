@@ -224,7 +224,7 @@ const Home: React.FC = () => {
     }
   }
 
-  const bookRide = () => {
+  const bookRide = (rideType: "coride_x" | "premium") => {
     if (!locationGranted) {
       presentToast({ message: "Location permission is required to book a ride.", duration: 2000, color: "danger" });
       return;
@@ -248,7 +248,8 @@ const Home: React.FC = () => {
       destination: dropoffLocation,
       distance,
       duration,
-      price: fare,
+      price: rideType === "premium" ? parseFloat((fare! * 1.8).toFixed(2)) : fare,
+      rideType,
       womenOnly,
     };
 
@@ -440,7 +441,7 @@ const Home: React.FC = () => {
                   <h3 className="options-title">Choose a ride</h3>
 
                   <IonList className="ride-list">
-                    <IonItem lines="none" className="ride-item selected" onClick={bookRide}>
+                    <IonItem lines="none" className="ride-item selected" onClick={() => bookRide("coride_x")}>
                       <img
                         slot="start"
                         src={SedanIcon}
@@ -456,7 +457,7 @@ const Home: React.FC = () => {
                       </div>
                     </IonItem>
 
-                    <IonItem lines="none" className="ride-item" onClick={bookRide}>
+                    <IonItem lines="none" className="ride-item" onClick={() => bookRide("premium")}>
                       <img
                         slot="start"
                         src={SuvIcon}
@@ -474,7 +475,7 @@ const Home: React.FC = () => {
                   </IonList>
 
                   <div className="book-btn-wrapper">
-                    <IonButton expand="block" className="book-btn" onClick={bookRide}>
+                    <IonButton expand="block" className="book-btn" onClick={() => bookRide("coride_x")}>
                       {womenOnly ? "Confirm Women-Only Ride" : "Confirm CoRide X"}
                     </IonButton>
                   </div>

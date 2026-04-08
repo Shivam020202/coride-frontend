@@ -12,6 +12,7 @@ import {
   IonSegmentButton,
   IonLabel,
   useIonToast,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import axios from "axios";
 import { Geolocation } from "@capacitor/geolocation";
@@ -42,6 +43,14 @@ const Login: React.FC = () => {
   const history = useHistory();
   const [present] = useIonToast();
 
+  useIonViewWillEnter(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token && role) {
+      history.replace(role === "consumer" ? "/tabs/home" : "/driver/home");
+    }
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -69,7 +78,7 @@ const Login: React.FC = () => {
         duration: 2000,
         color: "success",
       });
-      history.push(actualRole === "consumer" ? "/tabs/home" : "/driver/home");
+      history.replace(actualRole === "consumer" ? "/tabs/home" : "/driver/home");
     } catch (error: any) {
       setLoading(false);
       present({

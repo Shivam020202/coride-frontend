@@ -11,6 +11,9 @@ import {
   useIonToast,
   IonRefresher,
   IonRefresherContent,
+  IonToggle,
+  IonItem,
+  IonList,
 } from "@ionic/react";
 import { personCircleOutline, carOutline, timeOutline, shieldCheckmarkOutline } from "ionicons/icons";
 import axios from "axios";
@@ -52,7 +55,17 @@ const DriverHome: React.FC = () => {
         socket.connect();
         const userId = res.data._id || res.data.id;
         if (userId) {
-          const registerPayload = { userId: userId, role: "driver", gender: res.data.gender || "male" };
+          const acceptedRideTypes = [
+            localStorage.getItem("accept_coride_x") !== "false" ? "coride_x" : "",
+            localStorage.getItem("accept_premium") !== "false" ? "premium" : "",
+          ].filter(Boolean);
+
+          const registerPayload = { 
+            userId: userId, 
+            role: "driver", 
+            gender: res.data.gender || "male",
+            acceptedRideTypes,
+          };
           console.log("[Driver] Registering with payload:", registerPayload, "connected:", socket.connected);
           // If already connected, emit immediately
           if (socket.connected) {
@@ -144,9 +157,37 @@ const DriverHome: React.FC = () => {
       history.push("/verification");
       return;
     }
+    
+    // Check if at least one ride type is selected
+    const acceptX = localStorage.getItem("accept_coride_x") !== "false";
+    const acceptP = localStorage.getItem("accept_premium") !== "false";
+    if (!online && !acceptX && !acceptP) {
+      present({ message: "Please select at least one ride type to accept.", duration: 2500, color: "warning" });
+      return;
+    }
+
     setOnline(!online);
     if (online) {
       setRequests([]);
+    }
+  };
+
+  const handleTogglePreference = (type: "coride_x" | "premium", value: boolean) => {
+    localStorage.setItem(type === "coride_x" ? "accept_coride_x" : "accept_premium", JSON.stringify(value));
+    
+    // If connected, update registry immediately
+    if (user && socket.connected) {
+       const userId = user._id || user.id;
+       const acceptedRideTypes = [
+         localStorage.getItem("accept_coride_x") !== "false" ? "coride_x" : "",
+         localStorage.getItem("accept_premium") !== "false" ? "premium" : "",
+       ].filter(Boolean);
+       socket.emit("register", {
+         userId,
+         role: "driver",
+         gender: user.gender || "male",
+         acceptedRideTypes
+       });
     }
   };
 
@@ -226,6 +267,31 @@ const DriverHome: React.FC = () => {
           )}
           <div className="driver-status-card">
             <h2>{online ? "You are Online" : "You are Offline"}</h2>
+
+            {!online && (
+              <div className="driver-preferences">
+                <p>Select ride types to accept:</p>
+                <IonList lines="none">
+                  <IonItem>
+                    <IonToggle 
+                      checked={localStorage.getItem("accept_coride_x") !== "false"}
+                      onIonChange={e => handleTogglePreference("coride_x", e.detail.checked)}
+                    >
+                      Accept CoRide X
+                    </IonToggle>
+                  </IonItem>
+                  <IonItem>
+                    <IonToggle 
+                      checked={localStorage.getItem("accept_premium") !== "false"}
+                      onIonChange={e => handleTogglePreference("premium", e.detail.checked)}
+                    >
+                      Accept Premium Rides
+                    </IonToggle>
+                  </IonItem>
+                </IonList>
+              </div>
+            )}
+
             <IonButton
               expand="block"
               className="status-toggle"
