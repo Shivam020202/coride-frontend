@@ -397,7 +397,7 @@ const ActiveRide: React.FC = () => {
           <IonButtons slot="start">
             <IonButton
               className="back-btn-glass"
-              onClick={() => history.replace("/tabs/home")}
+              onClick={() => history.replace({ pathname: "/tabs/home", state: { reset: true } })}
             >
               <IonIcon icon={close} />
             </IonButton>
@@ -602,7 +602,7 @@ const ActiveRide: React.FC = () => {
                     color: "success",
                   });
                   setShowRatingModal(false);
-                  history.push("/tabs/home");
+                  history.push({ pathname: "/tabs/home", state: { reset: true } });
                 }}
               >
                 Submit Rating
@@ -612,7 +612,7 @@ const ActiveRide: React.FC = () => {
                 className="rating-skip-btn"
                 onClick={() => {
                   setShowRatingModal(false);
-                  history.push("/tabs/home");
+                  history.push({ pathname: "/tabs/home", state: { reset: true } });
                 }}
               >
                 Skip

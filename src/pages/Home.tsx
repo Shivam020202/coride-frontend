@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   IonPage,
   IonContent,
@@ -45,6 +45,7 @@ const getGreeting = (): string => {
 
 const Home: React.FC = () => {
   const history = useHistory();
+  const location = useLocation<{ reset?: boolean }>();
   const [showRideOptions, setShowRideOptions] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [womenOnly, setWomenOnly] = useState(false);
@@ -188,6 +189,28 @@ const Home: React.FC = () => {
     getCurrentLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (location.state?.reset) {
+      setShowRideOptions(false);
+      setDirectionsResponse(null);
+      setPickupLocation("");
+      setDropoffLocation("");
+      setIsBooking(false);
+      setFare(null);
+      setDistance("");
+      setDuration("");
+      if (originRef.current) originRef.current.value = "";
+      if (destRef.current) destRef.current.value = "";
+      
+      // Clear the reset flag so it doesn't trigger again on subsequent renders
+      history.replace({ pathname: location.pathname, state: {} });
+      
+      // Restore current location tracking / map centering
+      getCurrentLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   async function calculateRoute() {
     if (!locationGranted) {
